@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشات - Elmalah Family</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* === الهوية البصرية الجديدة (تم التعديل هنا فقط) === */
+        :root {
+            --primary-color: #FFD966;      /* اللون الأصفر */
+            --primary-text-color: #1A2238; /* لون النص الداكن للأزرار الصفراء */
+            --dark-bg: #1A2238;            /* الخلفية الزرقاء الداكنة للهيدر */
+            --light-bg: #FFFFFF;           /* الخلفية البيضاء للشات */
+            --secondary-bg: #F0F2F5;       /* خلفية حقل الإدخال والرسائل الأخرى */
+            --border-color: #EAEAEA;
+            --my-message-bg: var(--primary-color);
+            --other-message-bg: var(--secondary-bg);
+            --text-color: #1A2238;
+            --light-text-color: #FFFFFF;
+            --timestamp-color: #8D94A8;
+            --notification-color: #ff6b6b;
+        }
+        /* ============================================== */
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--light-bg); color: var(--text-color); }
+        .hidden { display: none !important; }
+        .chat-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
+        
+        /* --- Sidebar --- */
+        .sidebar { width: 320px; background-color: #f7f7f7; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; }
+        .sidebar-header {
+            padding: 20px; display: flex; align-items: center;
+            background-color: var(--dark-bg); color: var(--light-text-color);
+        }
+        .sidebar-header .user-info { flex-grow: 1; margin-right: 15px; }
+        .sidebar-header .user-info h4 { margin: 0; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar-header .avatar-wrapper { width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; background-color: #eee; }
+        #logout-btn { background: none; border: none; cursor: pointer; color: #a9b3d1; transition: color 0.2s; padding: 5px; }
+        #logout-btn:hover { color: var(--primary-color); }
+        .contacts-title { padding: 10px 20px; font-weight: 600; color: #999; font-size: 14px; text-transform: uppercase; }
+        .contacts-list { flex-grow: 1; overflow-y: auto; }
+        .contact-item { position: relative; display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: background-color 0.2s; border-right: 4px solid transparent; }
+        .contact-item:hover { background-color: var(--secondary-bg); }
+        .contact-item.active { background-color: #fffbeB; border-right-color: var(--primary-color); }
+        .contact-item .avatar-wrapper { width: 45px; height: 45px; margin-left: 15px; flex-shrink: 0; border-radius: 50%; background-color: #eee; }
+        .contact-item span { font-weight: 600; font-size: 16px; }
+        .unread-badge { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background-color: var(--notification-color); color: white; min-width: 22px; height: 22px; border-radius: 11px; font-size: 12px; font-weight: bold; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; padding: 0 4px; }
+        .sidebar-action { padding: 15px 20px; border-top: 1px solid var(--border-color); }
+        #create-group-btn { width: 100%; background: var(--dark-bg); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
+        #create-group-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* --- Chat Window --- */
+        .chat-window { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--light-bg); }
+        .chat-header {
+            display: flex; align-items: center; padding: 15px 25px;
+            background-color: var(--dark-bg); color: var(--light-text-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 5; gap: 15px;
+        }
+        #menu-toggle { display: none; background: none; border: none; cursor: pointer; margin-left: 15px; color: var(--light-text-color); }
+        #chat-header-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; }
+        #chat-header-info h4 { margin: 0; font-size: 18px; }
+        .messages-area-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #chat-welcome { text-align: center; margin: auto; color: #aaa; }
+        #chat-welcome svg { width: 100px; height: 100px; margin-bottom: 20px; }
+        #chat-welcome h3 { margin: 0; font-size: 22px; }
+        .messages-area { height: 100%; padding: 25px; overflow-y: auto; display: flex; flex-direction: column-reverse; }
+        
+        /* --- Message Bubbles --- */
+        .message-wrapper { display: flex; gap: 12px; align-items: flex-end; max-width: 80%; margin-bottom: 20px; }
+        .message-wrapper.mine { align-self: flex-end; flex-direction: row-reverse; } /* Use row-reverse for my messages */
+        .message-wrapper.other { align-self: flex-start; }
+        .message-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+        .message-content { display: flex; flex-direction: column; max-width: 100%; }
+        .message-wrapper.mine .message-content { align-items: flex-end; }
+        .sender-name { font-size: 13px; color: #555; margin-bottom: 4px; font-weight: bold; padding: 0 10px; }
+        .message-bubble { padding: 12px 18px; border-radius: 20px; line-height: 1.6; word-wrap: break-word; }
+        .message-bubble.mine { background: var(--my-message-bg); color: var(--primary-text-color); border-bottom-right-radius: 5px; }
+        .message-bubble.other { background: var(--other-message-bg); color: var(--text-color); border-bottom-left-radius: 5px; }
+        .message-timestamp { font-size: 11px; color: var(--timestamp-color); margin-top: 5px; padding: 0 10px; }
+        
+        /* --- Input Area --- */
+        .message-input-area { position: relative; display: flex; padding: 15px 25px; background-color: #F7F7F7; border-top: 1px solid var(--border-color); align-items: center; gap: 15px; }
+        #message-input { flex-grow: 1; border: none; background-color: var(--secondary-bg); border-radius: 25px; padding: 14px 22px; font-size: 16px; font-family: 'Cairo', sans-serif; }
+        #message-input:focus { outline: none; box-shadow: 0 0 0 2px var(--primary-color); }
+        .chat-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .chat-btn:hover { transform: scale(1.1); }
+        #emoji-btn { font-size: 24px; color: #8D94A8; }
+        #send-btn { background: var(--primary-color); width: 48px; height: 48px; border-radius: 50%; }
+        #send-btn svg { stroke: var(--primary-text-color); }
+
+        .emoji-picker { position: absolute; bottom: 85px; right: 25px; background: #fff; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 15px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.2s; z-index: 10; }
+        .emoji-picker.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+        .emoji-picker span { font-size: 22px; cursor: pointer; text-align: center; transition: transform 0.2s; }
+        .emoji-picker span:hover { transform: scale(1.2); }
+        
+        /* --- Modal & Responsive --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+        .modal-content { background: white; padding: 25px 30px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .modal-content h2 { margin-top: 0; }
+        .modal-content .input-group { margin-bottom: 20px; }
+        .modal-content input[type="text"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
+        .modal-user-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
+        .modal-user-item { display: flex; align-items: center; gap: 15px; padding: 8px; border-radius: 6px; cursor: pointer; }
+        .modal-user-item:hover { background-color: var(--secondary-bg); }
+        .modal-user-item input[type="checkbox"] { width: 18px; height: 18px; }
+        .modal-user-item .avatar-wrapper { width: 40px; height: 40px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        .modal-btn.primary { background-color: var(--primary-color); color: var(--primary-text-color); }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 9; transition: opacity 0.3s ease-in-out; }
+        .sidebar-overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; top: 0; right: 0; bottom: 0; transform: translateX(100%); z-index: 10; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+            .sidebar.open { transform: translateX(0); }
+            #menu-toggle { display: block; }
+            .message-wrapper { max-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img id="my-avatar" src="" alt="Avatar" class="avatar-wrapper">
+                <div class="user-info"> <h4 id="my-name">...</h4> </div>
+                <button id="logout-btn" title="تسجيل الخروج">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+            <div class="contacts-list" id="contacts-list"></div>
+            <div class="sidebar-action"><button id="create-group-btn">إنشاء جروب جديد +</button></div>
+        </aside>
+
+        <main class="chat-window">
+            <header class="chat-header">
+                <button id="menu-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <img id="chat-header-avatar" src="" alt="" class="avatar-wrapper hidden">
+                <div id="chat-header-info"></div>
+            </header>
+            <div class="messages-area-wrapper">
+                 <div id="chat-welcome">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                      <h3>مرحباً بك!</h3>
+                      <p>اختر محادثة من القائمة للبدء</p>
+                 </div>
+                <div class="messages-area hidden" id="messages-area"></div>
+            </div>
+            <footer class="message-input-area hidden" id="message-input-area">
+                <button id="emoji-btn" class="chat-btn">😊</button>
+                <input type="text" id="message-input" placeholder="اكتب رسالتك...">
+                <button id="send-btn" class="chat-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+                <div class="emoji-picker" id="emoji-picker"></div>
+            </footer>
+        </main>
+    </div>
+
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <div id="create-group-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>إنشاء جروب جديد</h2>
+            <div class="input-group">
+                <input type="text" id="group-name-input" placeholder="اكتب اسم الجروب هنا...">
+            </div>
+            <h4>اختر الأعضاء</h4>
+            <div class="modal-user-list" id="group-members-list"></div>
+            <div class="modal-actions">
+                <button id="confirm-create-group-btn" class="modal-btn primary">إنشاء الجروب</button>
+                <button id="cancel-create-group-btn" class="modal-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeLDfHnZQ2VPzTXRzX4LG2CspnY09Pp6k",
+            authDomain: "chat-11b02.firebaseapp.com",
+            projectId: "chat-11b02",
+            storageBucket: "chat-11b02.appspot.com",
+            messagingSenderId: "837639744108",
+            appId: "1:837639744108:web:99b97ffbf2b891a70c4649"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const UIElements = {
+                myAvatar: document.getElementById('my-avatar'),
+                myName: document.getElementById('my-name'),
+                logoutBtn: document.getElementById('logout-btn'),
+                contactsList: document.getElementById('contacts-list'),
+                chatHeaderInfo: document.getElementById('chat-header-info'),
+                chatHeaderAvatar: document.getElementById('chat-header-avatar'),
+                messagesArea: document.getElementById('messages-area'),
+                messageInputArea: document.getElementById('message-input-area'),
+                messageInput: document.getElementById('message-input'),
+                sendBtn: document.getElementById('send-btn'),
+                emojiBtn: document.getElementById('emoji-btn'),
+                emojiPicker: document.getElementById('emoji-picker'),
+                menuToggle: document.getElementById('menu-toggle'),
+                sidebar: document.getElementById('sidebar'),
+                chatWelcome: document.getElementById('chat-welcome'),
+                sidebarOverlay: document.getElementById('sidebar-overlay'),
+                createGroupBtn: document.getElementById('create-group-btn'),
+                createGroupModal: document.getElementById('create-group-modal'),
+                groupNameInput: document.getElementById('group-name-input'),
+                groupMembersList: document.getElementById('group-members-list'),
+                confirmCreateGroupBtn: document.getElementById('confirm-create-group-btn'),
+                cancelCreateGroupBtn: document.getElementById('cancel-create-group-btn'),
+            };
+
+            /* === START: التعديل الأول (إضافة متغير للجروبات) === */
+            let currentUser = null, currentChat = { id: null, type: null, data: null }, allUsers = [], allGroups = [], unsubscribeMessages = null;
+            /* === END: التعديل الأول === */
+            let unreadListeners = {};
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    loadMyInfo();
+                    loadAllUsersAndChats();
+                    initializeUI();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
+
+            async function loadMyInfo() {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    UIElements.myName.textContent = data.name;
+                    UIElements.myAvatar.src = data.avatarUrl;
+                }
+            }
+
+            /* === START: التعديل الثاني (تعديل منطق تحميل وعرض القائمة) === */
+            function loadAllUsersAndChats() {
+                // المستمع الأول: يراقب تغييرات المستخدمين
+                db.collection('users').onSnapshot(snapshot => {
+                    allUsers = [];
+                    snapshot.forEach(doc => {
+                        if (doc.id !== currentUser.uid) allUsers.push(doc.data());
+                    });
+                    renderContactList(); // إعادة رسم القائمة
+                });
+
+                // المستمع الثاني: يراقب تغييرات الجروبات
+                db.collection('groups').where('members', 'array-contains', currentUser.uid).onSnapshot(snapshot => {
+                    allGroups = []; // تحديث قائمة الجروبات
+                    snapshot.forEach(doc => {
+                        allGroups.push({...doc.data(), id: doc.id});
+                    });
+                    renderContactList(); // إعادة رسم القائمة
+                });
+            }
+
+            function renderContactList() {
+                UIElements.contactsList.innerHTML = '';
+                
+                // عرض المحادثات الفردية
+                if(allUsers.length > 0) {
+                    const usersTitle = document.createElement('div');
+                    usersTitle.className = 'contacts-title';
+                    usersTitle.textContent = 'المحادثات الفردية';
+                    UIElements.contactsList.appendChild(usersTitle);
+                    allUsers.forEach(user => renderContactItem(user, 'user'));
+                }
+                
+                // عرض الجروبات من المتغير العام مباشرة
+                if (allGroups.length > 0) {
+                    const groupsTitle = document.createElement('div');
+                    groupsTitle.className = 'contacts-title';
+                    groupsTitle.textContent = 'الجروبات';
+                    UIElements.contactsList.appendChild(groupsTitle);
+                    allGroups.forEach(group => renderContactItem(group, 'group'));
+                }
+            }
+            /* === END: التعديل الثاني === */
+
+
+            function renderContactItem(data, type) {
+                const el = document.createElement('div');
+                el.className = 'contact-item';
+                const id = (type === 'user') ? data.uid : data.id;
+                el.dataset.id = id;
+
+                const avatarUrl = (type === 'user') 
+                    ? data.avatarUrl 
+                    : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(data.name)}`;
+                
+                el.innerHTML = `<img src="${avatarUrl}" alt="${data.name}" class="avatar-wrapper"><span>${data.name}</span>`;
+                
+                el.addEventListener('click', () => startChat(data, type));
+                
+                UIElements.contactsList.appendChild(el);
+
+                const chatId = (type === 'user') ? [currentUser.uid, id].sort().join('_') : id;
+                const collectionPath = (type === 'user') ? `chats/${chatId}/messages` : `groups/${id}/messages`;
+                
+                const q = db.collection(collectionPath).where('senderId', '!=', currentUser.uid).where('isRead', '==', false);
+                
+                if(unreadListeners[id]) unreadListeners[id](); 
+
+                unreadListeners[id] = q.onSnapshot(snapshot => {
+                    const count = snapshot.size;
+                    let badge = el.querySelector('.unread-badge');
+                    if (count > 0 && currentChat.id !== chatId) {
+                        if (!badge) {
+                            badge = document.createElement('div');
+                            badge.className = 'unread-badge';
+                            el.appendChild(badge);
+                        }
+                        badge.textContent = count > 9 ? '9+' : count;
+                    } else {
+                        if (badge) badge.remove();
+                    }
+                });
+            }
+            
+            function startChat(data, type) {
+                if (type === 'user') {
+                    currentChat = { id: [currentUser.uid, data.uid].sort().join('_'), type: 'user', data: data };
+                    updateReadReceipts(data.uid);
+                } else {
+                    currentChat = { id: data.id, type: 'group', data: data };
+                }
+                updateChatUI();
+            }
+
+            function updateChatUI() {
+                document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
+                const activeContactId = currentChat.type === 'user' ? currentChat.data.uid : currentChat.data.id;
+                const activeContact = document.querySelector(`.contact-item[data-id='${activeContactId}']`);
+                if(activeContact) activeContact.classList.add('active');
+
+                if (window.innerWidth <= 768) {
+                         UIElements.sidebar.classList.remove('open');
+                         UIElements.sidebarOverlay.classList.add('hidden');
+                }
+
+                UIElements.chatWelcome.classList.add('hidden');
+                UIElements.messagesArea.classList.remove('hidden');
+                UIElements.messageInputArea.classList.remove('hidden');
+
+                UIElements.chatHeaderInfo.innerHTML = `<h4>${currentChat.data.name}</h4>`;
+                const avatarUrl = (currentChat.type === 'user') 
+                    ? currentChat.data.avatarUrl 
+                    : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(currentChat.data.name)}`;
+                UIElements.chatHeaderAvatar.src = avatarUrl;
+                UIElements.chatHeaderAvatar.classList.remove('hidden');
+
+                loadMessages();
+            }
+
+            async function updateReadReceipts(otherUserId) {
+                const ref = db.collection('chats').doc(currentChat.id).collection('messages');
+                const q = ref.where('senderId', '==', otherUserId).where('isRead', '==', false);
+                const snapshot = await q.get();
+                if(snapshot.empty) return;
+                const batch = db.batch();
+                snapshot.forEach(doc => batch.update(doc.ref, { isRead: true }));
+                await batch.commit();
+            }
+
+            function loadMessages() {
+                if (unsubscribeMessages) unsubscribeMessages();
+                UIElements.messagesArea.innerHTML = '';
+                const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
+                const messagesRef = db.collection(collectionPath).orderBy('timestamp', 'desc').limit(50);
+
+                unsubscribeMessages = messagesRef.onSnapshot(snapshot => {
+                    snapshot.docChanges().reverse().forEach(change => {
+                        if (change.type === 'added') {
+                            displayMessage(change.doc.data(), change.doc.id);
+                        }
+                    });
+                });
+            }
+
+            function formatTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+
+            async function displayMessage(msg) {
+                const isMine = msg.senderId === currentUser.uid;
+                const wrapper = document.createElement('div');
+                wrapper.className = `message-wrapper ${isMine ? 'mine' : 'other'}`;
+                
+                let senderData = allUsers.find(u => u.uid === msg.senderId);
+                if (!senderData) {
+                    if (isMine) {
+                        senderData = { avatarUrl: UIElements.myAvatar.src, name: 'أنا' };
+                    } else {
+                        const userDoc = await db.collection('users').doc(msg.senderId).get();
+                        if (userDoc.exists) senderData = userDoc.data();
+                    }
+                }
+
+                const avatarUrl = senderData ? senderData.avatarUrl : '';
+                const senderName = senderData ? senderData.name : 'مستخدم';
+                
+                let senderNameEl = '';
+                if (!isMine) {
+                    senderNameEl = `<div class="sender-name">${senderName}</div>`;
+                }
+                
+                wrapper.innerHTML = `
+                    <img src="${avatarUrl}" class="message-avatar" alt="${senderName}">
+                    <div class="message-content">
+                        ${senderNameEl}
+                        <div class="message-bubble ${isMine ? 'mine' : 'other'}">${msg.text}</div>
+                        <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+                    </div>
+                `;
+
+                UIElements.messagesArea.prepend(wrapper);
+                if (isMine) UIElements.messagesArea.scrollTop = 0;
+            }
+
+            async function sendMessage() {
+                const text = UIElements.messageInput.value.trim();
+                if (text === '' || !currentChat.id) return;
+                UIElements.messageInput.value = '';
+                const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
+                await db.collection(collectionPath).add({
+                    text: text,
+                    senderId: currentUser.uid,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    isRead: false
+                });
+            }
+
+            function showCreateGroupModal() {
+                UIElements.groupMembersList.innerHTML = '';
+                allUsers.forEach(user => {
+                    const userItem = document.createElement('label');
+                    userItem.className = 'modal-user-item';
+                    userItem.innerHTML = `
+                        <input type="checkbox" data-uid="${user.uid}">
+                        <img src="${user.avatarUrl}" class="avatar-wrapper">
+                        <span>${user.name}</span>
+                    `;
+                    UIElements.groupMembersList.appendChild(userItem);
+                });
+                UIElements.createGroupModal.classList.remove('hidden');
+            }
+
+            async function createGroup() {
+                const groupName = UIElements.groupNameInput.value.trim();
+                if (!groupName) { alert('الرجاء إدخال اسم للجروب.'); return; }
+                
+                const selectedMembers = Array.from(UIElements.groupMembersList.querySelectorAll('input:checked'))
+                                             .map(input => input.dataset.uid);
+                
+                if (selectedMembers.length === 0) { alert('الرجاء اختيار عضو واحد على الأقل.'); return; }
+
+                const allMemberIds = [currentUser.uid, ...selectedMembers];
+                
+                try {
+                    await db.collection('groups').add({
+                        name: groupName,
+                        members: allMemberIds,
+                        createdBy: currentUser.uid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    UIElements.createGroupModal.classList.add('hidden');
+                    UIElements.groupNameInput.value = '';
+                } catch (error) {
+                    console.error("Error creating group: ", error);
+                    alert("حدث خطأ أثناء إنشاء الجروب.");
+                }
+            }
+            
+            function initializeUI() {
+                const emojis = ['😊', '😂', '❤️', '😍', '🤔', '👍', '🙏', '🎉', '💯', '🔥', '😎', '😢', '😡', '😴', '😮', '😇', '😈', '👋', '👌', '👏', '👀', '✨', '🚀', '💻', '💡', '✅', '❌', '❓', '❗', '☀️', '🌙', '⭐', '🌈', '🎂', '🎁', '☕', '🍕', '🚗', '✈️', '🏠', '🌍', '⏰', '💰', '💪', '🧠', '⚽', '🥇'];
+                UIElements.emojiPicker.innerHTML = '';
+                emojis.forEach(emoji => {
+                    const span = document.createElement('span');
+                    span.textContent = emoji;
+                    span.addEventListener('click', () => { UIElements.messageInput.value += emoji; UIElements.emojiPicker.classList.remove('visible'); });
+                    UIElements.emojiPicker.appendChild(span);
+                });
+                UIElements.emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); UIElements.emojiPicker.classList.toggle('visible'); });
+                document.body.addEventListener('click', () => UIElements.emojiPicker.classList.remove('visible'));
+                UIElements.sendBtn.addEventListener('click', sendMessage);
+                UIElements.messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+                UIElements.logoutBtn.addEventListener('click', () => auth.signOut());
+                
+                UIElements.menuToggle.addEventListener('click', () => {
+                    UIElements.sidebar.classList.toggle('open');
+                    UIElements.sidebarOverlay.classList.toggle('hidden');
+                });
+                UIElements.sidebarOverlay.addEventListener('click', () => {
+                    UIElements.sidebar.classList.remove('open');
+                    UIElements.sidebarOverlay.classList.add('hidden');
+                });
+
+                UIElements.createGroupBtn.addEventListener('click', showCreateGroupModal);
+                UIElements.cancelCreateGroupBtn.addEventListener('click', () => UIElements.createGroupModal.classList.add('hidden'));
+                UIElements.confirmCreateGroupBtn.addEventListener('click', createGroup);
+            }
+        });
+    </script>
+</body>
+</html>

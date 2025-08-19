@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرحباً بك - Elmalah Family</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === الهوية البصرية الجديدة (تم التعديل هنا فقط) === */
+        :root {
+            --primary-color: #FFD966;      /* اللون الأصفر */
+            --primary-text-color: #1A2238; /* اللون الأزرق الداكن للكتابة على الأصفر */
+            --dark-bg: #1A2238;           /* الخلفية الزرقاء الداكنة */
+            --light-bg: #2C395B;          /* لون أفتح للخلفيات الفرعية */
+            --text-color: #FFFFFF;        /* لون النص الأبيض */
+            --border-color: #4A5C8B;      /* لون الحدود */
+            --error-color: #ff6b6b;
+        }
+        /* ============================================== */
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .auth-container {
+            background: transparent;
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .auth-container h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 40px;
+            font-size: 36px;
+            font-weight: 800;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px 18px;
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 16px;
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-group input::placeholder {
+            color: #a9b3d1;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 217, 102, 0.2);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary-color);
+            color: var(--primary-text-color);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .auth-btn:hover {
+            background-color: #f0c851;
+            transform: translateY(-2px);
+        }
+        .auth-btn:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 15px;
+            color: #a9b3d1;
+        }
+        .toggle-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .hidden { display: none; }
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        .avatar-picker-container { margin-bottom: 20px; }
+        .avatar-picker-container h4 {
+            margin-bottom: 15px;
+            color: #a9b3d1;
+            text-align: center;
+            font-weight: normal;
+        }
+        .avatar-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .avatar-picker img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            background-color: var(--light-bg);
+        }
+        .avatar-picker img:hover { transform: scale(1.1); }
+        .avatar-picker img.selected {
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div id="login-view">
+            <h2>Elmalah Family</h2>
+            <div class="input-group"><input type="email" id="login-email" placeholder="البريد الإلكتروني" required></div>
+            <div class="input-group"><input type="password" id="login-password" placeholder="كلمة المرور" required></div>
+            <button id="login-btn" class="auth-btn">دخول</button>
+            <p class="toggle-link">ليس لديك حساب؟ <a href="#" id="show-signup-link">إنشاء حساب جديد</a></p>
+        </div>
+        <div id="signup-view" class="hidden">
+            <h2>Elmalah Family</h2>
+            <div class="input-group"><input type="text" id="signup-name" placeholder="الاسم الذي سيظهر للجميع" required></div>
+            <div class="input-group"><input type="email" id="signup-email" placeholder="البريد الإلكتروني" required></div>
+            <div class="input-group"><input type="password" id="signup-password" placeholder="كلمة المرور" required></div>
+            <div class="avatar-picker-container">
+                <h4>اختر شخصيتك:</h4>
+                <div class="avatar-picker" id="avatar-picker"></div>
+            </div>
+            <button id="signup-btn" class="auth-btn">إنشاء الحساب</button>
+            <p class="toggle-link">لديك حساب بالفعل؟ <a href="#" id="show-login-link">تسجيل الدخول</a></p>
+        </div>
+        <p id="error-message" class="error-message"></p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeLDfHnZQ2VPzTXRzX4LG2CspnY09Pp6k",
+            authDomain: "chat-11b02.firebaseapp.com",
+            projectId: "chat-11b02",
+            storageBucket: "chat-11b02.appspot.com",
+            messagingSenderId: "837639744108",
+            appId: "1:837639744108:web:99b97ffbf2b891a70c4649"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginView = document.getElementById('login-view');
+            const signupView = document.getElementById('signup-view');
+            const showSignupLink = document.getElementById('show-signup-link');
+            const showLoginLink = document.getElementById('show-login-link');
+            const errorMessage = document.getElementById('error-message');
+            const avatarPicker = document.getElementById('avatar-picker');
+            let selectedAvatar = null;
+
+            const avatars = [];
+            const seedNames = ['Max', 'Bella', 'Charlie', 'Lucy', 'Cooper', 'Luna', 'Milo', 'Daisy', 'Rocky', 'Sadie', 'Leo', 'Zoe', 'Jack', 'Chloe', 'Toby', 'Lily', 'Cody', 'Nala', 'Duke', 'Penny', 'Oliver', 'Ruby', 'Winston', 'Rosie', 'Murphy', 'Stella', 'Finn', 'Roxy', 'Louie', 'Gracie', 'Zeus', 'Coco', 'Henry', 'Lola', 'Gus', 'Molly', 'Simba', 'Bailey', 'Oscar', 'Maggie', 'Buddy', 'Sophie', 'Archie', 'Mia', 'Teddy', 'Abby', 'Bear', 'Ginger', 'Riley', 'Cleo'];
+            
+            seedNames.forEach(seed => {
+                const avatarUrl = `https://api.dicebear.com/8.x/adventurer/svg?seed=${seed}&radius=50`;
+                avatars.push(avatarUrl);
+            });
+
+            avatars.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.dataset.avatarUrl = url;
+                img.addEventListener('click', () => {
+                    document.querySelectorAll('.avatar-picker img').forEach(el => el.classList.remove('selected'));
+                    img.classList.add('selected');
+                    selectedAvatar = url;
+                });
+                avatarPicker.appendChild(img);
+            });
+
+            const toggleViews = (show) => {
+                errorMessage.textContent = '';
+                if (show === 'signup') { loginView.classList.add('hidden'); signupView.classList.remove('hidden'); } 
+                else { signupView.classList.add('hidden'); loginView.classList.remove('hidden'); }
+            };
+            showSignupLink.addEventListener('click', (e) => { e.preventDefault(); toggleViews('signup'); });
+            showLoginLink.addEventListener('click', (e) => { e.preventDefault(); toggleViews('login'); });
+
+            const signupBtn = document.getElementById('signup-btn');
+            signupBtn.addEventListener('click', () => {
+                const name = document.getElementById('signup-name').value.trim();
+                const email = document.getElementById('signup-email').value.trim();
+                const password = document.getElementById('signup-password').value;
+                if (!name || !email || !password) { errorMessage.textContent = 'الرجاء ملء جميع الحقول.'; return; }
+                if (!selectedAvatar) { errorMessage.textContent = 'الرجاء اختيار شخصيتك.'; return; }
+                signupBtn.textContent = 'جارٍ الإنشاء...'; signupBtn.disabled = true;
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(cred => db.collection('users').doc(cred.user.uid).set({ name: name, avatarUrl: selectedAvatar, uid: cred.user.uid }))
+                    .then(() => { window.location.href = 'chat.html'; })
+                    .catch(err => { errorMessage.textContent = "هذا البريد الإلكتروني مستخدم بالفعل أو أن كلمة المرور ضعيفة."; })
+                    .finally(() => { signupBtn.textContent = 'إنشاء الحساب'; signupBtn.disabled = false; });
+            });
+
+            const loginBtn = document.getElementById('login-btn');
+            loginBtn.addEventListener('click', () => {
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+                if (!email || !password) { errorMessage.textContent = 'الرجاء إدخال البيانات.'; return; }
+                loginBtn.textContent = 'جارٍ الدخول...'; loginBtn.disabled = true;
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(() => { window.location.href = 'chat.html'; })
+                    .catch(err => { errorMessage.textContent = "بيانات الدخول غير صحيحة."; })
+                    .finally(() => { loginBtn.textContent = 'دخول'; loginBtn.disabled = false; });
+            });
+        });
+    </script>
+</body>
+</html>
