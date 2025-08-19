@@ -8,13 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* === الهوية البصرية الجديدة (تم التعديل هنا فقط) === */
         :root {
-            --primary-color: #FFD966;      /* اللون الأصفر */
-            --primary-text-color: #1A2238; /* لون النص الداكن للأزرار الصفراء */
-            --dark-bg: #1A2238;            /* الخلفية الزرقاء الداكنة للهيدر */
-            --light-bg: #FFFFFF;           /* الخلفية البيضاء للشات */
-            --secondary-bg: #F0F2F5;       /* خلفية حقل الإدخال والرسائل الأخرى */
+            --primary-color: #FFD966;
+            --primary-text-color: #1A2238;
+            --dark-bg: #1A2238;
+            --light-bg: #FFFFFF;
+            --secondary-bg: #F0F2F5;
             --border-color: #EAEAEA;
             --my-message-bg: var(--primary-color);
             --other-message-bg: var(--secondary-bg);
@@ -22,20 +21,18 @@
             --light-text-color: #FFFFFF;
             --timestamp-color: #8D94A8;
             --notification-color: #ff6b6b;
+            --read-receipt-color: #4fc3f7;
         }
-        /* ============================================== */
 
         * { box-sizing: border-box; }
         body { font-family: 'Cairo', sans-serif; margin: 0; background-color: var(--light-bg); color: var(--text-color); }
         .hidden { display: none !important; }
+
         .chat-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
-        
-        /* --- Sidebar --- */
+        .chat-window { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; background-color: var(--light-bg); }
+
         .sidebar { width: 320px; background-color: #f7f7f7; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; }
-        .sidebar-header {
-            padding: 20px; display: flex; align-items: center;
-            background-color: var(--dark-bg); color: var(--light-text-color);
-        }
+        .sidebar-header { padding: 20px; display: flex; align-items: center; background-color: var(--dark-bg); color: var(--light-text-color); }
         .sidebar-header .user-info { flex-grow: 1; margin-right: 15px; }
         .sidebar-header .user-info h4 { margin: 0; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sidebar-header .avatar-wrapper { width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; background-color: #eee; }
@@ -48,30 +45,49 @@
         .contact-item.active { background-color: #fffbeB; border-right-color: var(--primary-color); }
         .contact-item .avatar-wrapper { width: 45px; height: 45px; margin-left: 15px; flex-shrink: 0; border-radius: 50%; background-color: #eee; }
         .contact-item span { font-weight: 600; font-size: 16px; }
-        .unread-badge { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background-color: var(--notification-color); color: white; min-width: 22px; height: 22px; border-radius: 11px; font-size: 12px; font-weight: bold; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; padding: 0 4px; }
+        .unread-badge { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background-color: var(--notification-color); color: white; min-width: 22px; height: 22px; border-radius: 11px; font-size: 12px; font-weight: bold; display: flex; justify-content: center; align-items: center; border: 2px solid #f7f7f7; padding: 0 4px; }
         .sidebar-action { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         #create-group-btn { width: 100%; background: var(--dark-bg); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: opacity 0.2s, transform 0.2s; }
         #create-group-btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
-        /* --- Chat Window --- */
-        .chat-window { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--light-bg); }
-        .chat-header {
-            display: flex; align-items: center; padding: 15px 25px;
-            background-color: var(--dark-bg); color: var(--light-text-color);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 5; gap: 15px;
-        }
-        #menu-toggle { display: none; background: none; border: none; cursor: pointer; margin-left: 15px; color: var(--light-text-color); }
-        #chat-header-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; }
-        #chat-header-info h4 { margin: 0; font-size: 18px; }
-        .messages-area-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        #chat-welcome { text-align: center; margin: auto; color: #aaa; }
-        #chat-welcome svg { width: 100px; height: 100px; margin-bottom: 20px; }
-        #chat-welcome h3 { margin: 0; font-size: 22px; }
-        .messages-area { height: 100%; padding: 25px; overflow-y: auto; display: flex; flex-direction: column-reverse; }
+        .chat-header { position: relative; display: flex; align-items: center; padding: 15px 25px; background-color: var(--dark-bg); color: var(--light-text-color); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 5; gap: 15px; flex-shrink: 0; }
+        #menu-toggle { position: relative; display: none; background: none; border: none; cursor: pointer; margin-left: 15px; color: var(--light-text-color); }
         
-        /* --- Message Bubbles --- */
-        .message-wrapper { display: flex; gap: 12px; align-items: flex-end; max-width: 80%; margin-bottom: 20px; }
-        .message-wrapper.mine { align-self: flex-end; flex-direction: row-reverse; } /* Use row-reverse for my messages */
+        #menu-toggle .notification-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background-color: var(--notification-color); border-radius: 50%; border: 2px solid var(--dark-bg); display: none; }
+        #menu-toggle.has-unread .notification-dot { display: block; }
+
+        #chat-header-avatar { width: 45px; height: 45px; border-radius: 50%; background-color: #eee; }
+        #chat-header-info { flex-grow: 1; }
+        #chat-header-info h4 { margin: 0; font-size: 18px; }
+
+        #group-settings-btn { background: none; border: none; color: var(--light-text-color); cursor: pointer; padding: 5px; }
+        .group-settings-dropdown { position: absolute; top: 60px; left: 20px; background-color: white; color: var(--text-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; list-style: none; padding: 8px 0; margin: 0; min-width: 180px; }
+        .group-settings-dropdown li { padding: 10px 20px; cursor: pointer; }
+        .group-settings-dropdown li:hover { background-color: var(--secondary-bg); }
+        .group-settings-dropdown li.delete { color: var(--notification-color); }
+
+        /* START: تعديل شاشة الترحيب */
+        #chat-welcome { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin: auto; color: #aaa; }
+        #welcome-default-message svg { width: 100px; height: 100px; margin-bottom: 20px; }
+        #welcome-default-message h3 { margin: 0; font-size: 22px; }
+        #welcome-notifications-list { list-style: none; padding: 0; margin: 0; max-width: 400px; width: 100%; }
+        #welcome-notifications-list h3 { color: var(--text-color); margin-bottom: 20px; }
+        .welcome-notification-item { background-color: var(--secondary-bg); padding: 15px 20px; border-radius: 12px; margin-bottom: 10px; color: var(--text-color); font-weight: 600; text-align: right; }
+        .welcome-notification-item .count { background-color: var(--notification-color); color: white; border-radius: 50%; padding: 2px 8px; font-size: 14px; margin-left: 10px; }
+        /* END: تعديل شاشة الترحيب */
+
+        /* START: تعديل طريقة عرض الرسائل */
+        .messages-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column; /* تعديل مهم: إزالة column-reverse */
+        }
+        /* END: تعديل طريقة عرض الرسائل */
+
+        .message-wrapper { display: flex; gap: 12px; align-items: flex-end; max-width: 80%; margin-top: 20px; } /* تغيير margin-bottom إلى margin-top */
+        .message-wrapper.mine { align-self: flex-end; flex-direction: row-reverse; }
         .message-wrapper.other { align-self: flex-start; }
         .message-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
         .message-content { display: flex; flex-direction: column; max-width: 100%; }
@@ -80,10 +96,13 @@
         .message-bubble { padding: 12px 18px; border-radius: 20px; line-height: 1.6; word-wrap: break-word; }
         .message-bubble.mine { background: var(--my-message-bg); color: var(--primary-text-color); border-bottom-right-radius: 5px; }
         .message-bubble.other { background: var(--other-message-bg); color: var(--text-color); border-bottom-left-radius: 5px; }
-        .message-timestamp { font-size: 11px; color: var(--timestamp-color); margin-top: 5px; padding: 0 10px; }
-        
-        /* --- Input Area --- */
-        .message-input-area { position: relative; display: flex; padding: 15px 25px; background-color: #F7F7F7; border-top: 1px solid var(--border-color); align-items: center; gap: 15px; }
+
+        .message-meta { display: flex; align-items: center; gap: 8px; margin-top: 5px; padding: 0 10px; }
+        .message-timestamp { font-size: 11px; color: var(--timestamp-color); }
+        .read-status { font-size: 16px; color: var(--timestamp-color); font-weight: bold; }
+        .read-status.read { color: var(--read-receipt-color); }
+
+        .message-input-area { position: relative; display: flex; padding: 15px 25px; background-color: #F7F7F7; border-top: 1px solid var(--border-color); align-items: center; gap: 15px; flex-shrink: 0; }
         #message-input { flex-grow: 1; border: none; background-color: var(--secondary-bg); border-radius: 25px; padding: 14px 22px; font-size: 16px; font-family: 'Cairo', sans-serif; }
         #message-input:focus { outline: none; box-shadow: 0 0 0 2px var(--primary-color); }
         .chat-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
@@ -91,16 +110,15 @@
         #emoji-btn { font-size: 24px; color: #8D94A8; }
         #send-btn { background: var(--primary-color); width: 48px; height: 48px; border-radius: 50%; }
         #send-btn svg { stroke: var(--primary-text-color); }
-
         .emoji-picker { position: absolute; bottom: 85px; right: 25px; background: #fff; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 15px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.2s; z-index: 10; }
         .emoji-picker.visible { opacity: 1; visibility: visible; transform: translateY(0); }
         .emoji-picker span { font-size: 22px; cursor: pointer; text-align: center; transition: transform 0.2s; }
         .emoji-picker span:hover { transform: scale(1.2); }
         
-        /* --- Modal & Responsive --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
         .modal-content { background: white; padding: 25px 30px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .modal-content h2 { margin-top: 0; }
+        .modal-content label { display: block; margin-bottom: 8px; font-weight: 600; }
         .modal-content .input-group { margin-bottom: 20px; }
         .modal-content input[type="text"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
         .modal-user-list { max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; }
@@ -140,18 +158,33 @@
             <header class="chat-header">
                 <button id="menu-toggle">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    <div class="notification-dot"></div>
                 </button>
                 <img id="chat-header-avatar" src="" alt="" class="avatar-wrapper hidden">
                 <div id="chat-header-info"></div>
+                <button id="group-settings-btn" class="hidden">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </button>
+                <ul id="group-settings-dropdown" class="group-settings-dropdown hidden">
+                    <li id="edit-group-name-btn">تغيير اسم الجروب</li>
+                    <li id="add-group-members-btn">إضافة أعضاء</li>
+                    <li id="delete-group-btn" class="delete">حذف الجروب</li>
+                </ul>
             </header>
-            <div class="messages-area-wrapper">
-                 <div id="chat-welcome">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                      <h3>مرحباً بك!</h3>
-                      <p>اختر محادثة من القائمة للبدء</p>
-                 </div>
-                <div class="messages-area hidden" id="messages-area"></div>
-            </div>
+            
+            <div id="chat-welcome">
+                <div id="welcome-default-message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <h3>مرحباً بك!</h3>
+                    <p>اختر محادثة من القائمة للبدء</p>
+                </div>
+                <div id="welcome-notifications-container" class="hidden">
+                     <h3>رسائل غير مقروءة</h3>
+                     <ul id="welcome-notifications-list"></ul>
+                </div>
+                </div>
+            <div class="messages-area hidden" id="messages-area"></div>
+            
             <footer class="message-input-area hidden" id="message-input-area">
                 <button id="emoji-btn" class="chat-btn">😊</button>
                 <input type="text" id="message-input" placeholder="اكتب رسالتك...">
@@ -176,6 +209,26 @@
             <div class="modal-actions">
                 <button id="confirm-create-group-btn" class="modal-btn primary">إنشاء الجروب</button>
                 <button id="cancel-create-group-btn" class="modal-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manage-group-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="manage-group-modal-title"></h2>
+            <div id="edit-name-section" class="hidden">
+                <div class="input-group">
+                    <label for="new-group-name-input">الاسم الجديد للجروب</label>
+                    <input type="text" id="new-group-name-input" placeholder="اكتب الاسم الجديد...">
+                </div>
+            </div>
+            <div id="add-members-section" class="hidden">
+                 <label>اختر الأعضاء الجدد</label>
+                 <div class="modal-user-list" id="add-group-members-list"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-manage-group-btn" class="modal-btn primary">حفظ التغييرات</button>
+                <button id="cancel-manage-group-btn" class="modal-btn">إلغاء</button>
             </div>
         </div>
     </div>
@@ -221,18 +274,36 @@
                 groupMembersList: document.getElementById('group-members-list'),
                 confirmCreateGroupBtn: document.getElementById('confirm-create-group-btn'),
                 cancelCreateGroupBtn: document.getElementById('cancel-create-group-btn'),
+                groupSettingsBtn: document.getElementById('group-settings-btn'),
+                groupSettingsDropdown: document.getElementById('group-settings-dropdown'),
+                editGroupNameBtn: document.getElementById('edit-group-name-btn'),
+                addGroupMembersBtn: document.getElementById('add-group-members-btn'),
+                deleteGroupBtn: document.getElementById('delete-group-btn'),
+                manageGroupModal: document.getElementById('manage-group-modal'),
+                manageGroupModalTitle: document.getElementById('manage-group-modal-title'),
+                editNameSection: document.getElementById('edit-name-section'),
+                newGroupNameInput: document.getElementById('new-group-name-input'),
+                addMembersSection: document.getElementById('add-members-section'),
+                addGroupMembersList: document.getElementById('add-group-members-list'),
+                confirmManageGroupBtn: document.getElementById('confirm-manage-group-btn'),
+                cancelManageGroupBtn: document.getElementById('cancel-manage-group-btn'),
+                // START: عناصر جديدة لشاشة الترحيب
+                welcomeDefaultMessage: document.getElementById('welcome-default-message'),
+                welcomeNotificationsContainer: document.getElementById('welcome-notifications-container'),
+                welcomeNotificationsList: document.getElementById('welcome-notifications-list'),
+                // END: عناصر جديدة
             };
 
-            /* === START: التعديل الأول (إضافة متغير للجروبات) === */
             let currentUser = null, currentChat = { id: null, type: null, data: null }, allUsers = [], allGroups = [], unsubscribeMessages = null;
-            /* === END: التعديل الأول === */
             let unreadListeners = {};
+            let unreadChats = new Map(); // لتخزين المحادثات غير المقروءة
+            let currentManageAction = null;
 
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUser = user;
                     loadMyInfo();
-                    loadAllUsersAndChats();
+                    loadAllUsersAndGroups();
                     initializeUI();
                 } else {
                     window.location.href = 'index.html';
@@ -248,31 +319,33 @@
                 }
             }
 
-            /* === START: التعديل الثاني (تعديل منطق تحميل وعرض القائمة) === */
-            function loadAllUsersAndChats() {
-                // المستمع الأول: يراقب تغييرات المستخدمين
+            function loadAllUsersAndGroups() {
                 db.collection('users').onSnapshot(snapshot => {
                     allUsers = [];
                     snapshot.forEach(doc => {
-                        if (doc.id !== currentUser.uid) allUsers.push(doc.data());
+                        if (doc.id !== currentUser.uid) allUsers.push({ ...doc.data(), uid: doc.id });
                     });
-                    renderContactList(); // إعادة رسم القائمة
+                    renderContactList();
                 });
 
-                // المستمع الثاني: يراقب تغييرات الجروبات
                 db.collection('groups').where('members', 'array-contains', currentUser.uid).onSnapshot(snapshot => {
-                    allGroups = []; // تحديث قائمة الجروبات
+                    allGroups = [];
                     snapshot.forEach(doc => {
-                        allGroups.push({...doc.data(), id: doc.id});
+                        allGroups.push({ ...doc.data(), id: doc.id });
                     });
-                    renderContactList(); // إعادة رسم القائمة
+                    renderContactList();
+                    if (currentChat.type === 'group') {
+                        const updatedGroupData = allGroups.find(g => g.id === currentChat.id);
+                        if (updatedGroupData) { currentChat.data = updatedGroupData; updateChatHeaderUI(); } 
+                        else { resetChatUI(); }
+                    }
                 });
             }
 
             function renderContactList() {
+                const activeChatId = currentChat.id; // حفظ الشات النشط
                 UIElements.contactsList.innerHTML = '';
                 
-                // عرض المحادثات الفردية
                 if(allUsers.length > 0) {
                     const usersTitle = document.createElement('div');
                     usersTitle.className = 'contacts-title';
@@ -281,7 +354,6 @@
                     allUsers.forEach(user => renderContactItem(user, 'user'));
                 }
                 
-                // عرض الجروبات من المتغير العام مباشرة
                 if (allGroups.length > 0) {
                     const groupsTitle = document.createElement('div');
                     groupsTitle.className = 'contacts-title';
@@ -289,9 +361,13 @@
                     UIElements.contactsList.appendChild(groupsTitle);
                     allGroups.forEach(group => renderContactItem(group, 'group'));
                 }
-            }
-            /* === END: التعديل الثاني === */
 
+                // إعادة تفعيل الشات النشط
+                if(activeChatId){
+                    const activeContact = document.querySelector(`.contact-item[data-id='${currentChat.type === 'user' ? currentChat.data.uid : currentChat.data.id}']`);
+                    if(activeContact) activeContact.classList.add('active');
+                }
+            }
 
             function renderContactItem(data, type) {
                 const el = document.createElement('div');
@@ -299,9 +375,7 @@
                 const id = (type === 'user') ? data.uid : data.id;
                 el.dataset.id = id;
 
-                const avatarUrl = (type === 'user') 
-                    ? data.avatarUrl 
-                    : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(data.name)}`;
+                const avatarUrl = (type === 'user') ? data.avatarUrl : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(data.name)}`;
                 
                 el.innerHTML = `<img src="${avatarUrl}" alt="${data.name}" class="avatar-wrapper"><span>${data.name}</span>`;
                 
@@ -312,68 +386,132 @@
                 const chatId = (type === 'user') ? [currentUser.uid, id].sort().join('_') : id;
                 const collectionPath = (type === 'user') ? `chats/${chatId}/messages` : `groups/${id}/messages`;
                 
-                const q = db.collection(collectionPath).where('senderId', '!=', currentUser.uid).where('isRead', '==', false);
-                
-                if(unreadListeners[id]) unreadListeners[id](); 
+                if(unreadListeners[chatId]) unreadListeners[chatId](); 
 
-                unreadListeners[id] = q.onSnapshot(snapshot => {
-                    const count = snapshot.size;
-                    let badge = el.querySelector('.unread-badge');
-                    if (count > 0 && currentChat.id !== chatId) {
-                        if (!badge) {
-                            badge = document.createElement('div');
-                            badge.className = 'unread-badge';
-                            el.appendChild(badge);
-                        }
-                        badge.textContent = count > 9 ? '9+' : count;
+                unreadListeners[chatId] = db.collection(collectionPath).onSnapshot(snapshot => {
+                    const unreadDocs = snapshot.docs.filter(doc => {
+                        const docData = doc.data();
+                        return docData.senderId !== currentUser.uid && (!docData.readBy || !docData.readBy.includes(currentUser.uid));
+                    });
+                    
+                    const unreadCount = unreadDocs.length;
+
+                    if (unreadCount > 0) {
+                        unreadChats.set(chatId, { name: data.name, count: unreadCount });
                     } else {
-                        if (badge) badge.remove();
+                        unreadChats.delete(chatId);
                     }
+
+                    updateUnreadBadge(el, chatId, unreadCount);
+                    updateGlobalUnreadIndicator();
+                    renderWelcomeNotifications();
                 });
             }
             
-            function startChat(data, type) {
-                if (type === 'user') {
-                    currentChat = { id: [currentUser.uid, data.uid].sort().join('_'), type: 'user', data: data };
-                    updateReadReceipts(data.uid);
+            // START: دوال جديدة لإدارة الإشعارات في الصفحة الرئيسية
+            function renderWelcomeNotifications() {
+                if (currentChat.id) return; // لا تعرضها إذا كان هناك شات مفتوح
+
+                UIElements.welcomeNotificationsList.innerHTML = '';
+                if (unreadChats.size > 0) {
+                    UIElements.welcomeDefaultMessage.classList.add('hidden');
+                    UIElements.welcomeNotificationsContainer.classList.remove('hidden');
+
+                    unreadChats.forEach((info) => {
+                        const li = document.createElement('li');
+                        li.className = 'welcome-notification-item';
+                        li.innerHTML = `لديك <span class="count">${info.count}</span> رسائل جديدة من <b>${info.name}</b>`;
+                        UIElements.welcomeNotificationsList.appendChild(li);
+                    });
                 } else {
-                    currentChat = { id: data.id, type: 'group', data: data };
+                    UIElements.welcomeDefaultMessage.classList.remove('hidden');
+                    UIElements.welcomeNotificationsContainer.classList.add('hidden');
                 }
-                updateChatUI();
+            }
+            // END: دوال جديدة
+
+            function updateUnreadBadge(element, chatId, count) {
+                let badge = element.querySelector('.unread-badge');
+                if (count > 0 && currentChat.id !== chatId) {
+                    if (!badge) {
+                        badge = document.createElement('div');
+                        badge.className = 'unread-badge';
+                        element.appendChild(badge);
+                    }
+                    badge.textContent = count > 9 ? '9+' : count;
+                } else {
+                    if (badge) badge.remove();
+                }
             }
 
+            function updateGlobalUnreadIndicator() {
+                const totalUnreadCount = document.querySelectorAll('.unread-badge').length;
+                UIElements.menuToggle.classList.toggle('has-unread', totalUnreadCount > 0);
+            }
+
+            function startChat(data, type) {
+                const newChatId = type === 'user' ? [currentUser.uid, data.uid].sort().join('_') : data.id;
+                if (currentChat.id === newChatId) return;
+                
+                if (type === 'user') { currentChat = { id: newChatId, type: 'user', data: data }; } 
+                else { currentChat = { id: newChatId, type: 'group', data: data }; }
+
+                updateChatUI();
+                updateReadReceipts();
+            }
+            
             function updateChatUI() {
                 document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
                 const activeContactId = currentChat.type === 'user' ? currentChat.data.uid : currentChat.data.id;
                 const activeContact = document.querySelector(`.contact-item[data-id='${activeContactId}']`);
-                if(activeContact) activeContact.classList.add('active');
+                if(activeContact) {
+                    activeContact.classList.add('active');
+                    const badge = activeContact.querySelector('.unread-badge');
+                    if (badge) {
+                        badge.remove();
+                        unreadChats.delete(currentChat.id);
+                        renderWelcomeNotifications();
+                        updateGlobalUnreadIndicator();
+                    }
+                }
 
                 if (window.innerWidth <= 768) {
-                         UIElements.sidebar.classList.remove('open');
-                         UIElements.sidebarOverlay.classList.add('hidden');
+                    UIElements.sidebar.classList.remove('open');
+                    UIElements.sidebarOverlay.classList.add('hidden');
                 }
 
                 UIElements.chatWelcome.classList.add('hidden');
                 UIElements.messagesArea.classList.remove('hidden');
                 UIElements.messageInputArea.classList.remove('hidden');
-
-                UIElements.chatHeaderInfo.innerHTML = `<h4>${currentChat.data.name}</h4>`;
-                const avatarUrl = (currentChat.type === 'user') 
-                    ? currentChat.data.avatarUrl 
-                    : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(currentChat.data.name)}`;
-                UIElements.chatHeaderAvatar.src = avatarUrl;
-                UIElements.chatHeaderAvatar.classList.remove('hidden');
-
+                
+                updateChatHeaderUI();
                 loadMessages();
             }
 
-            async function updateReadReceipts(otherUserId) {
-                const ref = db.collection('chats').doc(currentChat.id).collection('messages');
-                const q = ref.where('senderId', '==', otherUserId).where('isRead', '==', false);
+            function updateChatHeaderUI() {
+                UIElements.chatHeaderInfo.innerHTML = `<h4>${currentChat.data.name}</h4>`;
+                const avatarUrl = (currentChat.type === 'user') ? currentChat.data.avatarUrl : `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(currentChat.data.name)}`;
+                UIElements.chatHeaderAvatar.src = avatarUrl;
+                UIElements.chatHeaderAvatar.classList.remove('hidden');
+                UIElements.groupSettingsBtn.classList.toggle('hidden', currentChat.type !== 'group');
+            }
+
+            async function updateReadReceipts() {
+                if (!currentChat.id) return;
+                const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
+                const ref = db.collection(collectionPath);
+                
+                const q = ref.where('senderId', '!=', currentUser.uid);
                 const snapshot = await q.get();
                 if(snapshot.empty) return;
+
                 const batch = db.batch();
-                snapshot.forEach(doc => batch.update(doc.ref, { isRead: true }));
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.readBy || !data.readBy.includes(currentUser.uid)) {
+                        batch.update(doc.ref, { readBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+                    }
+                });
                 await batch.commit();
             }
 
@@ -381,14 +519,35 @@
                 if (unsubscribeMessages) unsubscribeMessages();
                 UIElements.messagesArea.innerHTML = '';
                 const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
-                const messagesRef = db.collection(collectionPath).orderBy('timestamp', 'desc').limit(50);
+                
+                // START: تعديل ترتيب الرسائل
+                const messagesRef = db.collection(collectionPath).orderBy('timestamp', 'asc').limit(50);
+                // END: تعديل ترتيب الرسائل
 
                 unsubscribeMessages = messagesRef.onSnapshot(snapshot => {
-                    snapshot.docChanges().reverse().forEach(change => {
+                    snapshot.docChanges().forEach(change => {
+                        const msgData = change.doc.data();
+                        const msgId = change.doc.id;
                         if (change.type === 'added') {
-                            displayMessage(change.doc.data(), change.doc.id);
+                            displayMessage(msgData, msgId);
+                        }
+                        if (change.type === 'modified') {
+                            const msgElement = document.getElementById(`msg-${msgId}`);
+                            if (msgElement) {
+                                const readStatusEl = msgElement.querySelector('.read-status');
+                                if (readStatusEl) {
+                                    const isRead = isMessageReadByAll(msgData);
+                                    if(isRead) {
+                                        readStatusEl.innerHTML = '✓✓';
+                                        readStatusEl.classList.add('read');
+                                    }
+                                }
+                            }
                         }
                     });
+                    if(document.hasFocus()) {
+                       updateReadReceipts();
+                    }
                 });
             }
 
@@ -396,17 +555,30 @@
                 if (!timestamp) return '';
                 return timestamp.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
+            
+            function isMessageReadByAll(msg) {
+                if (!msg || !msg.readBy || !currentChat.data) return false;
+                if (currentChat.type === 'user') return msg.readBy.length > 1;
+                if (currentChat.type === 'group') return currentChat.data.members && msg.readBy.length >= currentChat.data.members.length;
+                return false;
+            }
 
-            async function displayMessage(msg) {
+            async function displayMessage(msg, msgId) {
                 const isMine = msg.senderId === currentUser.uid;
+                
+                // START: منطق التمرير الذكي للأسفل
+                const messagesArea = UIElements.messagesArea;
+                const shouldScroll = messagesArea.scrollTop + messagesArea.clientHeight >= messagesArea.scrollHeight - 50;
+                // END: منطق التمرير
+
                 const wrapper = document.createElement('div');
                 wrapper.className = `message-wrapper ${isMine ? 'mine' : 'other'}`;
+                wrapper.id = `msg-${msgId}`;
                 
                 let senderData = allUsers.find(u => u.uid === msg.senderId);
                 if (!senderData) {
-                    if (isMine) {
-                        senderData = { avatarUrl: UIElements.myAvatar.src, name: 'أنا' };
-                    } else {
+                    if (isMine) { senderData = { avatarUrl: UIElements.myAvatar.src, name: 'أنا' }; } 
+                    else {
                         const userDoc = await db.collection('users').doc(msg.senderId).get();
                         if (userDoc.exists) senderData = userDoc.data();
                     }
@@ -416,21 +588,36 @@
                 const senderName = senderData ? senderData.name : 'مستخدم';
                 
                 let senderNameEl = '';
-                if (!isMine) {
+                if (currentChat.type === 'group' && !isMine) {
                     senderNameEl = `<div class="sender-name">${senderName}</div>`;
                 }
                 
+                let readStatusEl = '';
+                if (isMine) {
+                    const isRead = isMessageReadByAll(msg);
+                    const readClass = isRead ? 'read' : '';
+                    const readTicks = isRead ? '✓✓' : (msg.readBy ? '✓' : '');
+                    readStatusEl = `<span class="read-status ${readClass}">${readTicks}</span>`;
+                }
+
                 wrapper.innerHTML = `
                     <img src="${avatarUrl}" class="message-avatar" alt="${senderName}">
                     <div class="message-content">
                         ${senderNameEl}
                         <div class="message-bubble ${isMine ? 'mine' : 'other'}">${msg.text}</div>
-                        <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+                        <div class="message-meta">
+                            <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+                            ${readStatusEl}
+                        </div>
                     </div>
                 `;
 
-                UIElements.messagesArea.prepend(wrapper);
-                if (isMine) UIElements.messagesArea.scrollTop = 0;
+                // START: تعديل طريقة إضافة الرسالة
+                UIElements.messagesArea.appendChild(wrapper);
+                if (shouldScroll) {
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }
+                // END: تعديل طريقة إضافة الرسالة
             }
 
             async function sendMessage() {
@@ -438,12 +625,8 @@
                 if (text === '' || !currentChat.id) return;
                 UIElements.messageInput.value = '';
                 const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
-                await db.collection(collectionPath).add({
-                    text: text,
-                    senderId: currentUser.uid,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    isRead: false
-                });
+                
+                await db.collection(collectionPath).add({ text: text, senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp(), readBy: [currentUser.uid] });
             }
 
             function showCreateGroupModal() {
@@ -451,11 +634,7 @@
                 allUsers.forEach(user => {
                     const userItem = document.createElement('label');
                     userItem.className = 'modal-user-item';
-                    userItem.innerHTML = `
-                        <input type="checkbox" data-uid="${user.uid}">
-                        <img src="${user.avatarUrl}" class="avatar-wrapper">
-                        <span>${user.name}</span>
-                    `;
+                    userItem.innerHTML = `<input type="checkbox" data-uid="${user.uid}"><img src="${user.avatarUrl}" class="avatar-wrapper"><span>${user.name}</span>`;
                     UIElements.groupMembersList.appendChild(userItem);
                 });
                 UIElements.createGroupModal.classList.remove('hidden');
@@ -464,29 +643,76 @@
             async function createGroup() {
                 const groupName = UIElements.groupNameInput.value.trim();
                 if (!groupName) { alert('الرجاء إدخال اسم للجروب.'); return; }
-                
-                const selectedMembers = Array.from(UIElements.groupMembersList.querySelectorAll('input:checked'))
-                                             .map(input => input.dataset.uid);
-                
+                const selectedMembers = Array.from(UIElements.groupMembersList.querySelectorAll('input:checked')).map(input => input.dataset.uid);
                 if (selectedMembers.length === 0) { alert('الرجاء اختيار عضو واحد على الأقل.'); return; }
-
                 const allMemberIds = [currentUser.uid, ...selectedMembers];
-                
                 try {
-                    await db.collection('groups').add({
-                        name: groupName,
-                        members: allMemberIds,
-                        createdBy: currentUser.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    await db.collection('groups').add({ name: groupName, members: allMemberIds, createdBy: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                     UIElements.createGroupModal.classList.add('hidden');
                     UIElements.groupNameInput.value = '';
-                } catch (error) {
-                    console.error("Error creating group: ", error);
-                    alert("حدث خطأ أثناء إنشاء الجروب.");
+                } catch (error) { console.error("Error creating group: ", error); alert("حدث خطأ أثناء إنشاء الجروب."); }
+            }
+            
+            function showManageGroupModal(action) {
+                currentManageAction = action;
+                UIElements.manageGroupModal.classList.remove('hidden');
+                UIElements.editNameSection.classList.add('hidden');
+                UIElements.addMembersSection.classList.add('hidden');
+
+                if (action === 'editName') {
+                    UIElements.manageGroupModalTitle.textContent = 'تغيير اسم الجروب';
+                    UIElements.editNameSection.classList.remove('hidden');
+                    UIElements.newGroupNameInput.value = currentChat.data.name;
+                } else if (action === 'addMembers') {
+                    UIElements.manageGroupModalTitle.textContent = 'إضافة أعضاء جدد';
+                    UIElements.addMembersSection.classList.remove('hidden');
+                    const nonMembers = allUsers.filter(u => !currentChat.data.members.includes(u.uid));
+                    UIElements.addGroupMembersList.innerHTML = '';
+                    nonMembers.forEach(user => {
+                         const userItem = document.createElement('label');
+                         userItem.className = 'modal-user-item';
+                         userItem.innerHTML = `<input type="checkbox" data-uid="${user.uid}"><img src="${user.avatarUrl}" class="avatar-wrapper"><span>${user.name}</span>`;
+                         UIElements.addGroupMembersList.appendChild(userItem);
+                    });
+                }
+            }
+
+            async function handleManageGroupConfirm() {
+                const groupId = currentChat.id;
+                if (!groupId) return;
+
+                if (currentManageAction === 'editName') {
+                    const newName = UIElements.newGroupNameInput.value.trim();
+                    if(newName && newName !== currentChat.data.name) { await db.collection('groups').doc(groupId).update({ name: newName }); }
+                } else if (currentManageAction === 'addMembers') {
+                    const newMemberIds = Array.from(UIElements.addGroupMembersList.querySelectorAll('input:checked')).map(input => input.dataset.uid);
+                    if(newMemberIds.length > 0) { await db.collection('groups').doc(groupId).update({ members: firebase.firestore.FieldValue.arrayUnion(...newMemberIds) }); }
+                }
+                UIElements.manageGroupModal.classList.add('hidden');
+            }
+
+            async function deleteGroup() {
+                if (!currentChat.id || currentChat.type !== 'group') return;
+                const confirmation = confirm(`هل أنت متأكد من حذف جروب "${currentChat.data.name}"؟ هذا الإجراء لا يمكن التراجع عنه.`);
+                if (confirmation) {
+                    try { await db.collection('groups').doc(currentChat.id).delete(); resetChatUI(); } 
+                    catch (error) { console.error("Error deleting group: ", error); alert('حدث خطأ أثناء حذف الجروب.'); }
                 }
             }
             
+            function resetChatUI() {
+                 if (unsubscribeMessages) unsubscribeMessages();
+                 currentChat = { id: null, type: null, data: null };
+                 UIElements.chatWelcome.classList.remove('hidden');
+                 UIElements.messagesArea.classList.add('hidden');
+                 UIElements.messageInputArea.classList.add('hidden');
+                 UIElements.chatHeaderAvatar.classList.add('hidden');
+                 UIElements.chatHeaderInfo.innerHTML = '';
+                 UIElements.groupSettingsBtn.classList.add('hidden');
+                 document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
+                 renderWelcomeNotifications(); // تحديث شاشة الترحيب
+            }
+
             function initializeUI() {
                 const emojis = ['😊', '😂', '❤️', '😍', '🤔', '👍', '🙏', '🎉', '💯', '🔥', '😎', '😢', '😡', '😴', '😮', '😇', '😈', '👋', '👌', '👏', '👀', '✨', '🚀', '💻', '💡', '✅', '❌', '❓', '❗', '☀️', '🌙', '⭐', '🌈', '🎂', '🎁', '☕', '🍕', '🚗', '✈️', '🏠', '🌍', '⏰', '💰', '💪', '🧠', '⚽', '🥇'];
                 UIElements.emojiPicker.innerHTML = '';
@@ -497,7 +723,10 @@
                     UIElements.emojiPicker.appendChild(span);
                 });
                 UIElements.emojiBtn.addEventListener('click', (e) => { e.stopPropagation(); UIElements.emojiPicker.classList.toggle('visible'); });
-                document.body.addEventListener('click', () => UIElements.emojiPicker.classList.remove('visible'));
+                document.body.addEventListener('click', () => {
+                    UIElements.emojiPicker.classList.remove('visible');
+                    UIElements.groupSettingsDropdown.classList.add('hidden');
+                });
                 UIElements.sendBtn.addEventListener('click', sendMessage);
                 UIElements.messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
                 UIElements.logoutBtn.addEventListener('click', () => auth.signOut());
@@ -514,6 +743,13 @@
                 UIElements.createGroupBtn.addEventListener('click', showCreateGroupModal);
                 UIElements.cancelCreateGroupBtn.addEventListener('click', () => UIElements.createGroupModal.classList.add('hidden'));
                 UIElements.confirmCreateGroupBtn.addEventListener('click', createGroup);
+
+                UIElements.groupSettingsBtn.addEventListener('click', (e) => { e.stopPropagation(); UIElements.groupSettingsDropdown.classList.toggle('hidden'); });
+                UIElements.editGroupNameBtn.addEventListener('click', () => showManageGroupModal('editName'));
+                UIElements.addGroupMembersBtn.addEventListener('click', () => showManageGroupModal('addMembers'));
+                UIElements.deleteGroupBtn.addEventListener('click', deleteGroup);
+                UIElements.confirmManageGroupBtn.addEventListener('click', handleManageGroupConfirm);
+                UIElements.cancelManageGroupBtn.addEventListener('click', () => UIElements.manageGroupModal.classList.add('hidden'));
             }
         });
     </script>
