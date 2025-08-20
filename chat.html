@@ -179,7 +179,7 @@
                 <img id="chat-header-avatar" src="" alt="" class="avatar-wrapper hidden">
                 <div id="chat-header-info"></div>
                 <button id="group-settings-btn" class="hidden">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                 </button>
                 <ul id="group-settings-dropdown" class="group-settings-dropdown hidden">
                     <li id="edit-group-name-btn">تغيير اسم الجروب</li>
@@ -532,9 +532,7 @@
                 await batch.commit();
             }
 
-            // ================= START: MAJOR FIX AREA =================
-            // تم إعادة بناء هذه الوظائف لحل مشاكل الترتيب ومكان الزر بشكل نهائي
-
+            // ================= START: MAJOR FIX AREA (تم تعديل هذه الدالة) =================
             function loadMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
                 
@@ -563,15 +561,21 @@
                         isInitialLoad = false;
                     } else {
                         for (const change of snapshot.docChanges()) {
-                            if (change.type === 'added' && !change.doc.metadata.hasPendingWrites) {
-                                // الرسائل الجديدة تضاف في البداية (لتظهر في الأسفل)
+                            // ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+                            // ✅       هنا كان التعديل       ✅
+                            // ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+                            // تم إزالة شرط "hasPendingWrites" للسماح بظهور الرسائل فوراً
+                            if (change.type === 'added') {
+                                // الرسائل الجديدة تضاف في البداية (لتظهر في الأسفل بسبب خاصية فليكس)
                                 const wrapper = await createMessageElement(change.doc.data(), change.doc.id);
                                 UIElements.messagesArea.prepend(wrapper);
                             }
                             if (change.type === 'modified') {
                                 const msgElement = document.getElementById(`msg-${change.doc.id}`);
                                 if (msgElement) {
-                                    // ... (منطق تعديل حالة القراءة لم يتغير)
+                                    // أعد بناء عنصر الرسالة لتحديث حالة القراءة
+                                    const newWrapper = await createMessageElement(change.doc.data(), change.doc.id);
+                                    msgElement.replaceWith(newWrapper);
                                 }
                             }
                         }
@@ -645,7 +649,8 @@
                 if (isMine) {
                     const isRead = isMessageReadByAll(msg);
                     const readClass = isRead ? 'read' : '';
-                    const readTicks = isRead ? '✓✓' : (msg.readBy ? '✓' : '');
+                    // ✓✓ for read by all, ✓ for delivered/read by some
+                    const readTicks = isRead ? '✓✓' : (msg.readBy && msg.readBy.length > 1 ? '✓✓' : '✓');
                     readStatusEl = `<span class="read-status ${readClass}">${readTicks}</span>`;
                 }
 
@@ -681,8 +686,15 @@
             
             function isMessageReadByAll(msg) {
                 if (!msg || !msg.readBy || !currentChat.data) return false;
-                if (currentChat.type === 'user') return msg.readBy.length > 1;
-                if (currentChat.type === 'group') return currentChat.data.members && msg.readBy.length >= currentChat.data.members.length;
+                if (currentChat.type === 'user') {
+                    // In a 1-on-1 chat, it's read if the other person's ID is in readBy
+                    return msg.readBy.includes(currentChat.data.uid);
+                }
+                if (currentChat.type === 'group') {
+                    // In a group, it's read if all members (except the sender) have read it
+                    const otherMembers = currentChat.data.members.filter(id => id !== currentUser.uid);
+                    return otherMembers.every(memberId => msg.readBy.includes(memberId));
+                }
                 return false;
             }
 
@@ -735,10 +747,10 @@
                     const nonMembers = allUsers.filter(u => !currentChat.data.members.includes(u.uid));
                     UIElements.addGroupMembersList.innerHTML = '';
                     nonMembers.forEach(user => {
-                          const userItem = document.createElement('label');
-                          userItem.className = 'modal-user-item';
-                          userItem.innerHTML = `<input type="checkbox" data-uid="${user.uid}"><img src="${user.avatarUrl}" class="avatar-wrapper"><span>${user.name}</span>`;
-                          UIElements.addGroupMembersList.appendChild(userItem);
+                        const userItem = document.createElement('label');
+                        userItem.className = 'modal-user-item';
+                        userItem.innerHTML = `<input type="checkbox" data-uid="${user.uid}"><img src="${user.avatarUrl}" class="avatar-wrapper"><span>${user.name}</span>`;
+                        UIElements.addGroupMembersList.appendChild(userItem);
                     });
                 }
             }
