@@ -35,7 +35,7 @@
         .sidebar-header { padding: 20px; display: flex; align-items: center; background-color: var(--dark-bg); color: var(--light-text-color); }
         .sidebar-header .user-info { flex-grow: 1; margin-right: 15px; }
         .sidebar-header .user-info h4 { margin: 0; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sidebar-header .avatar-wrapper { width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; background-color: #eee; }
+        .sidebar-header .avatar-wrapper { width: 50px; height: 50px; flex-shrink: 0; border-radius: 50%; background-color: #eee; cursor: pointer; }
         #logout-btn { background: none; border: none; cursor: pointer; color: #a9b3d1; transition: color 0.2s; padding: 5px; }
         #logout-btn:hover { color: var(--primary-color); }
         .contacts-title { padding: 10px 20px; font-weight: 600; color: #999; font-size: 14px; text-transform: uppercase; }
@@ -51,6 +51,9 @@
         #create-group-btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .chat-header { position: relative; display: flex; align-items: center; padding: 15px 25px; background-color: var(--dark-bg); color: var(--light-text-color); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 5; gap: 15px; flex-shrink: 0; }
+        
+        #back-to-welcome-btn { background: none; border: none; cursor: pointer; color: var(--light-text-color); padding: 5px; }
+
         #menu-toggle { position: relative; display: none; background: none; border: none; cursor: pointer; margin-left: 15px; color: var(--light-text-color); }
         
         #menu-toggle .notification-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; background-color: var(--notification-color); border-radius: 50%; border: 2px solid var(--dark-bg); display: none; }
@@ -74,33 +77,26 @@
         .welcome-notification-item { background-color: var(--secondary-bg); padding: 15px 20px; border-radius: 12px; margin-bottom: 10px; color: var(--text-color); font-weight: 600; text-align: right; }
         .welcome-notification-item .count { background-color: var(--notification-color); color: white; border-radius: 50%; padding: 2px 8px; font-size: 14px; margin-left: 10px; }
 
-        .messages-area {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 25px;
-            display: flex;
-            flex-direction: column-reverse; /* هذا السطر مهم جداً لعرض الرسائل من الأسفل للأعلى */
+        #go-to-game-btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: var(--primary-text-color);
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: transform 0.2s;
         }
+        #go-to-game-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .messages-area { flex-grow: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column-reverse; }
         
-        #load-more-btn {
-            margin: 15px auto 0; /* توسيط الزر مع مسافة علوية */
-            padding: 8px 18px;
-            border: 1px solid var(--border-color);
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            border-radius: 20px;
-            cursor: pointer;
-            font-family: 'Cairo', sans-serif;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        #load-more-btn:hover {
-            background-color: var(--secondary-bg);
-        }
-        #load-more-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
+        #load-more-btn { margin: 15px auto 0; padding: 8px 18px; border: 1px solid var(--border-color); background-color: var(--light-bg); color: var(--text-color); border-radius: 20px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 14px; transition: background-color 0.2s; }
+        #load-more-btn:hover { background-color: var(--secondary-bg); }
+        #load-more-btn:disabled { cursor: not-allowed; opacity: 0.7; }
 
         .message-wrapper { display: flex; gap: 12px; align-items: flex-end; max-width: 80%; margin-bottom: 20px; }
         .message-wrapper.mine { align-self: flex-end; flex-direction: row-reverse; }
@@ -148,6 +144,27 @@
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.4); z-index: 9; transition: opacity 0.3s ease-in-out; }
         .sidebar-overlay.hidden { opacity: 0; pointer-events: none; }
         
+        .avatar-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .avatar-option-item {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+        .avatar-option-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; right: 0; bottom: 0; transform: translateX(100%); z-index: 10; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
             .sidebar.open { transform: translateX(0); }
@@ -160,7 +177,7 @@
     <div class="chat-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <img id="my-avatar" src="" alt="Avatar" class="avatar-wrapper">
+                <img id="my-avatar" src="" alt="Avatar" class="avatar-wrapper" title="اضغط لتغيير صورتك">
                 <div class="user-info"> <h4 id="my-name">...</h4> </div>
                 <button id="logout-btn" title="تسجيل الخروج">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -172,6 +189,10 @@
 
         <main class="chat-window">
             <header class="chat-header">
+                <button id="back-to-welcome-btn" class="hidden" title="العودة">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </button>
+
                 <button id="menu-toggle">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                     <div class="notification-dot"></div>
@@ -193,6 +214,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     <h3>مرحباً بك!</h3>
                     <p>اختر محادثة من القائمة للبدء</p>
+                    <a href="game.html" id="go-to-game-btn">🎮 إبدأ اللعب</a>
                 </div>
                 <div id="welcome-notifications-container" class="hidden">
                     <h3>رسائل غير مقروءة</h3>
@@ -214,6 +236,17 @@
     </div>
 
     <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <div id="avatar-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>اختر صورتك الشخصية</h2>
+            <div class="avatar-options-grid" id="avatar-list">
+                </div>
+            <div class="modal-actions">
+                <button id="cancel-avatar-modal-btn" class="modal-btn">إلغاء</button>
+            </div>
+        </div>
+    </div>
 
     <div id="create-group-modal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -309,7 +342,11 @@
                 welcomeDefaultMessage: document.getElementById('welcome-default-message'),
                 welcomeNotificationsContainer: document.getElementById('welcome-notifications-container'),
                 welcomeNotificationsList: document.getElementById('welcome-notifications-list'),
-                loadMoreBtn: null, // سيتم إنشاؤه ديناميكياً
+                loadMoreBtn: null, 
+                backToWelcomeBtn: document.getElementById('back-to-welcome-btn'),
+                avatarModal: document.getElementById('avatar-modal'),
+                avatarList: document.getElementById('avatar-list'),
+                cancelAvatarModalBtn: document.getElementById('cancel-avatar-modal-btn'),
             };
 
             let currentUser = null, currentChat = { id: null, type: null, data: null }, allUsers = [], allGroups = [], unsubscribeMessages = null;
@@ -319,6 +356,21 @@
 
             let lastVisibleMessageDoc = null; 
             let isLoadingOlderMessages = false; 
+
+            // ==================================================================
+            // START: قائمة الأفاتارات الصحيحة - مأخوذة من صفحة التسجيل
+            // ==================================================================
+            const avatarOptions = [];
+            const seedNames = ['Max', 'Bella', 'Charlie', 'Lucy', 'Cooper', 'Luna', 'Milo', 'Daisy', 'Rocky', 'Sadie', 'Leo', 'Zoe', 'Jack', 'Chloe', 'Toby', 'Lily', 'Cody', 'Nala', 'Duke', 'Penny', 'Oliver', 'Ruby', 'Winston', 'Rosie', 'Murphy', 'Stella', 'Finn', 'Roxy', 'Louie', 'Gracie', 'Zeus', 'Coco', 'Henry', 'Lola', 'Gus', 'Molly', 'Simba', 'Bailey', 'Oscar', 'Maggie', 'Buddy', 'Sophie', 'Archie', 'Mia', 'Teddy', 'Abby', 'Bear', 'Ginger', 'Riley', 'Cleo'];
+            
+            seedNames.forEach(seed => {
+                const avatarUrl = `https://api.dicebear.com/8.x/adventurer/svg?seed=${seed}&radius=50`;
+                avatarOptions.push(avatarUrl);
+            });
+            // ==================================================================
+            // END: قائمة الأفاتارات الصحيحة
+            // ==================================================================
+
 
             auth.onAuthStateChanged(user => {
                 if (user) {
@@ -500,6 +552,7 @@
                 UIElements.chatWelcome.classList.add('hidden');
                 UIElements.messagesArea.classList.remove('hidden');
                 UIElements.messageInputArea.classList.remove('hidden');
+                UIElements.backToWelcomeBtn.classList.remove('hidden');
                 
                 updateChatHeaderUI();
                 loadMessages();
@@ -532,11 +585,10 @@
                 await batch.commit();
             }
 
-            // ================= START: MAJOR FIX AREA (تم تعديل هذه الدالة) =================
             function loadMessages() {
                 if (unsubscribeMessages) unsubscribeMessages();
                 
-                UIElements.messagesArea.innerHTML = ''; // تفريغ منطقة الرسائل بالكامل
+                UIElements.messagesArea.innerHTML = ''; 
                 
                 const collectionPath = (currentChat.type === 'user') ? `chats/${currentChat.id}/messages` : `groups/${currentChat.id}/messages`;
                 const messagesRef = db.collection(collectionPath).orderBy('timestamp', 'desc').limit(50);
@@ -544,15 +596,13 @@
 
                 unsubscribeMessages = messagesRef.onSnapshot(async (snapshot) => {
                     if (isInitialLoad) {
-                        UIElements.messagesArea.innerHTML = ''; // تأكيد التفريغ
+                        UIElements.messagesArea.innerHTML = ''; 
                         
-                        // إضافة الرسائل بالترتيب الصحيح (من الأحدث للأقدم في DOM)
                         for (const doc of snapshot.docs) {
                             const wrapper = await createMessageElement(doc.data(), doc.id);
                             UIElements.messagesArea.appendChild(wrapper);
                         }
 
-                        // إضافة زر "تحميل المزيد" في النهاية (ليظهر في الأعلى)
                         if (snapshot.docs.length >= 50) {
                             createLoadMoreButton();
                         }
@@ -561,19 +611,13 @@
                         isInitialLoad = false;
                     } else {
                         for (const change of snapshot.docChanges()) {
-                            // ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
-                            // ✅       هنا كان التعديل       ✅
-                            // ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
-                            // تم إزالة شرط "hasPendingWrites" للسماح بظهور الرسائل فوراً
                             if (change.type === 'added') {
-                                // الرسائل الجديدة تضاف في البداية (لتظهر في الأسفل بسبب خاصية فليكس)
                                 const wrapper = await createMessageElement(change.doc.data(), change.doc.id);
                                 UIElements.messagesArea.prepend(wrapper);
                             }
                             if (change.type === 'modified') {
                                 const msgElement = document.getElementById(`msg-${change.doc.id}`);
                                 if (msgElement) {
-                                    // أعد بناء عنصر الرسالة لتحديث حالة القراءة
                                     const newWrapper = await createMessageElement(change.doc.data(), change.doc.id);
                                     msgElement.replaceWith(newWrapper);
                                 }
@@ -600,11 +644,10 @@
                 try {
                     const snapshot = await messagesRef.get();
                     if (snapshot.empty) {
-                        UIElements.loadMoreBtn.remove(); // إزالة الزر إذا لم يعد هناك رسائل
+                        UIElements.loadMoreBtn.remove();
                         return;
                     }
                     
-                    // إضافة الرسائل القديمة قبل زر "تحميل المزيد" بالترتيب الصحيح
                     for (const doc of snapshot.docs) {
                         const wrapper = await createMessageElement(doc.data(), doc.id);
                         UIElements.messagesArea.insertBefore(wrapper, UIElements.loadMoreBtn);
@@ -626,7 +669,6 @@
                 }
             }
 
-            // وظيفة موحدة لإنشاء عنصر الرسالة
             async function createMessageElement(msg, msgId) {
                 const isMine = msg.senderId === currentUser.uid;
                 const wrapper = document.createElement('div');
@@ -649,7 +691,6 @@
                 if (isMine) {
                     const isRead = isMessageReadByAll(msg);
                     const readClass = isRead ? 'read' : '';
-                    // ✓✓ for read by all, ✓ for delivered/read by some
                     const readTicks = isRead ? '✓✓' : (msg.readBy && msg.readBy.length > 1 ? '✓✓' : '✓');
                     readStatusEl = `<span class="read-status ${readClass}">${readTicks}</span>`;
                 }
@@ -676,8 +717,6 @@
                 UIElements.messagesArea.appendChild(btn);
                 UIElements.loadMoreBtn = btn;
             }
-            // ================= END: MAJOR FIX AREA =================
-
 
             function formatTimestamp(timestamp) {
                 if (!timestamp) return '';
@@ -687,11 +726,9 @@
             function isMessageReadByAll(msg) {
                 if (!msg || !msg.readBy || !currentChat.data) return false;
                 if (currentChat.type === 'user') {
-                    // In a 1-on-1 chat, it's read if the other person's ID is in readBy
                     return msg.readBy.includes(currentChat.data.uid);
                 }
                 if (currentChat.type === 'group') {
-                    // In a group, it's read if all members (except the sender) have read it
                     const otherMembers = currentChat.data.members.filter(id => id !== currentUser.uid);
                     return otherMembers.every(memberId => msg.readBy.includes(memberId));
                 }
@@ -787,8 +824,34 @@
                  UIElements.chatHeaderAvatar.classList.add('hidden');
                  UIElements.chatHeaderInfo.innerHTML = '';
                  UIElements.groupSettingsBtn.classList.add('hidden');
+                 UIElements.backToWelcomeBtn.classList.add('hidden');
                  document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
                  renderWelcomeNotifications();
+            }
+
+            function showAvatarModal() {
+                UIElements.avatarList.innerHTML = '';
+                avatarOptions.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'avatar-option-item';
+                    img.addEventListener('click', () => changeAvatar(url));
+                    UIElements.avatarList.appendChild(img);
+                });
+                UIElements.avatarModal.classList.remove('hidden');
+            }
+
+            async function changeAvatar(newAvatarUrl) {
+                if (!currentUser) return;
+                try {
+                    await db.collection('users').doc(currentUser.uid).update({ avatarUrl: newAvatarUrl });
+                    UIElements.myAvatar.src = newAvatarUrl;
+                    UIElements.avatarModal.classList.add('hidden');
+                    // تم حذف التنبيه ليكون التغيير أسرع وبدون مقاطعة
+                } catch (error) {
+                    console.error("Error updating avatar: ", error);
+                    alert('حدث خطأ أثناء تغيير الصورة.');
+                }
             }
 
             function initializeUI() {
@@ -828,6 +891,10 @@
                 UIElements.deleteGroupBtn.addEventListener('click', deleteGroup);
                 UIElements.confirmManageGroupBtn.addEventListener('click', handleManageGroupConfirm);
                 UIElements.cancelManageGroupBtn.addEventListener('click', () => UIElements.manageGroupModal.classList.add('hidden'));
+                
+                UIElements.backToWelcomeBtn.addEventListener('click', resetChatUI);
+                UIElements.myAvatar.addEventListener('click', showAvatarModal);
+                UIElements.cancelAvatarModalBtn.addEventListener('click', () => UIElements.avatarModal.classList.add('hidden'));
             }
         });
     </script>
