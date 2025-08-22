@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عروش الصحراء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .grid-cell {
+            background-color: rgba(0,0,0,0.2);
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 10h20M10 0v20' stroke='%234a5568' stroke-width='0.5'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)'/%3E%3C/svg%3E");
+            transition: background-color 0.2s;
+        }
+        .grid-cell:hover { background-color: rgba(250, 204, 21, 0.1); }
+        .building-icon { font-size: 2rem; color: #facc15; }
+        .toast { animation: fade-in-out 3s ease-in-out forwards; }
+        @keyframes fade-in-out {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        .view-hidden { display: none; }
+        .health-bar-bg { background-color: #4a5568; }
+        .health-bar-fill { background-color: #48bb78; transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 flex justify-center items-center z-50">
+        <div class="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold text-center text-yellow-400 mb-6">عروش الصحراء</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-300 mb-2">البريد الإلكتروني</label>
+                    <input type="email" id="email" class="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-yellow-500 focus:outline-none" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-300 mb-2">كلمة المرور</label>
+                    <input type="password" id="password" class="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:border-yellow-500 focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition-colors">
+                    تسجيل الدخول
+                </button>
+                <p id="login-error" class="text-red-500 text-center mt-4"></p>
+            </form>
+        </div>
+    </div>
+    
+    <div id="loader" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex flex-col justify-center items-center z-50">
+        <div class="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-lg">جاري تحميل القرية...</p>
+    </div>
+    
+    <div id="game-ui" class="hidden">
+        <header class="bg-gray-800 shadow-lg p-2 fixed top-0 left-0 right-0 z-40">
+            <div class="container mx-auto flex justify-around items-center flex-wrap text-sm">
+                <div id="resource-wood" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-tree mx-2 text-green-400"></i> <span class="font-bold">0 / 0</span></div>
+                <div id="resource-stone" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-gem mx-2 text-gray-400"></i> <span class="font-bold">0 / 0</span></div>
+                <div id="resource-iron" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-cog mx-2 text-blue-400"></i> <span class="font-bold">0 / 0</span></div>
+                <div id="resource-wheat" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-wheat-awn mx-2 text-yellow-300"></i> <span class="font-bold">0 / 0</span></div>
+                <div id="resource-gold" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-coins mx-2 text-yellow-500"></i> <span class="font-bold">0</span></div>
+                <div id="population-indicator" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg"> <i class="fas fa-users mx-2 text-purple-400"></i> <span class="font-bold">0 / 0</span></div>
+                <div id="help-icon" class="flex items-center m-1 p-2 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-600">
+                    <i class="fas fa-question-circle mx-2 text-xl text-cyan-400"></i>
+                </div>
+            </div>
+        </header>
+
+        <main class="pt-20 h-screen flex flex-col md:flex-row">
+            <div class="w-full md:w-3/4 h-full p-4 overflow-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex border-b border-gray-700">
+                        <button id="show-village-btn" class="px-4 py-2 bg-gray-700 text-yellow-400 font-bold rounded-t-lg">قريتك</button>
+                        <button id="show-map-btn" class="px-4 py-2 text-gray-400 hover:text-yellow-300 font-bold">خريطة العالم</button>
+                        <button id="show-alliance-btn" class="px-4 py-2 text-gray-400 hover:text-yellow-300 font-bold">التحالف</button>
+                    </div>
+                    <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">تسجيل الخروج</button>
+                </div>
+
+                <div id="village-view">
+                    <h2 id="village-name" class="text-2xl font-bold text-yellow-400 mb-4"></h2>
+                    <div id="village-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2"></div>
+                </div>
+
+                <div id="world-map-view" class="view-hidden">
+                    <h2 class="text-2xl font-bold text-yellow-400 mb-4">خريطة العالم</h2>
+                    <div id="world-map-list" class="space-y-3"></div>
+                </div>
+
+                <div id="alliance-view" class="view-hidden">
+                    <h2 class="text-2xl font-bold text-yellow-400 mb-4">مركز التحالف</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-xl font-bold mb-3 border-b border-gray-600 pb-2">الطلبات الواردة</h3>
+                            <div id="incoming-requests" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-3 border-b border-gray-600 pb-2">طلباتك الصادرة</h3>
+                            <div id="outgoing-requests" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                     <div class="mt-6">
+                        <h3 class="text-xl font-bold mb-3 border-b border-gray-600 pb-2">إرسال طلب جديد</h3>
+                        <p class="mb-4">اختر لاعبًا من خريطة العالم لإرسال طلب له.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <aside class="w-full md:w-1/4 bg-gray-800 p-4 h-full overflow-y-auto" id="info-panel">
+                <h3 class="text-xl font-bold border-b-2 border-yellow-500 pb-2">لوحة المعلومات</h3>
+                <div id="info-content" class="mt-4">
+                </div>
+                <div id="army-overview" class="mt-6">
+                    <h3 class="text-xl font-bold border-b-2 border-yellow-500 pb-2 mb-2">جيشك</h3>
+                    <div id="army-list" class="space-y-2"></div>
+                </div>
+                <div id="reports-overview" class="mt-6">
+                    <div class="flex justify-between items-center border-b-2 border-yellow-500 pb-2 mb-2">
+                        <h3 class="text-xl font-bold">تقارير المعارك</h3>
+                        <button id="show-all-reports-btn" class="text-sm text-yellow-400 hover:underline">عرض الكل</button>
+                    </div>
+                    <div id="reports-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <p class="text-gray-500 text-sm">لا توجد تقارير جديدة.</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div id="build-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div class="flex-shrink-0 flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-yellow-400">بناء مبنى جديد</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="build-options" class="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto"></div>
+        </div>
+    </div>
+    
+    <div id="attack-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 id="attack-modal-title" class="text-2xl font-bold text-yellow-400">إعداد الهجوم</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="attack-options">
+                <p class="mb-4">اختر عدد الجنود الذين تريد إرسالهم:</p>
+                <div id="attack-army-selection" class="space-y-3"></div>
+                <button id="confirm-attack-btn" class="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors">
+                    <i class="fas fa-khanda"></i> تأكيد الهجوم
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="reports-archive-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl h-3/4 flex flex-col">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-yellow-400">سجل التقارير الكامل</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="reports-archive-list" class="flex-grow overflow-y-auto space-y-2"></div>
+        </div>
+    </div>
+    
+    <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-3xl h-3/4 flex flex-col">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-yellow-400">كيف تلعب "عروش الصحراء"</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div class="flex-grow overflow-y-auto space-y-4 text-gray-300">
+                <div>
+                    <h4 class="text-xl text-yellow-500 font-bold mb-2">الهدف الأساسي</h4>
+                    <p>هدفك هو بناء قرية قوية، وتكوين جيش جرار، والهيمنة على الصحراء من خلال مهاجمة اللاعبين الآخرين والدفاع عن ممتلكاتك.</p>
+                </div>
+                <div>
+                    <h4 class="text-xl text-yellow-500 font-bold mb-2">الموارد</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><b>الخشب:</b> أساسي لبناء معظم المباني وتدريب بعض الوحدات.</li>
+                        <li><b>الحجر:</b> يستخدم في المباني القوية والتحصينات.</li>
+                        <li><b>الحديد:</b> ضروري لتدريب الوحدات المتقدمة والترقيات القوية.</li>
+                        <li><b>القمح:</b> لإطعام جيشك وسكانك.</li>
+                        <li><b>الذهب:</b> عملة نادرة تستخدم في عمليات خاصة.</li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 class="text-xl text-yellow-500 font-bold mb-2">المباني الأساسية</h4>
+                     <ul class="list-disc list-inside space-y-1">
+                        <li><b>قاعة المدينة:</b> توفر سعة تخزين أساسية وعدد سكان أساسي.</li>
+                        <li><b>المخزن:</b> يزيد من سعة تخزين الخشب والحجر والحديد.</li>
+                        <li><b>المزرعة:</b> تنتج القمح وتزيد من سعة تخزينه.</li>
+                        <li><b>المسكن:</b> يزيد الحد الأقصى لعدد السكان، مما يسمح لك بتكوين جيش أكبر.</li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 class="text-xl text-yellow-500 font-bold mb-2">الهجوم والدفاع</h4>
+                    <p>من "خريطة العالم"، يمكنك اختيار لاعب آخر لمهاجمته. كل وحدة لها قوة هجوم ودفاع مختلفة. إذا انتصرت في الهجوم، ستنهب جزءًا من موارده. إذا خسرت، ستفقد جنودك.</p>
+                    <p class="mt-2"><b>تدمير المباني:</b> إذا هاجمت قرية لا تملك جنودًا، سيتسبب هجومك في إلحاق الضرر بمبانيها. الهجمات المتكررة يمكن أن تدمر المباني بالكامل. إذا دُمرت "قاعة المدينة"، تصبح القرية "مهجورة".</p>
+                </div>
+                 <div>
+                    <h4 class="text-xl text-yellow-500 font-bold mb-2">الميزات المتقدمة</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><b>القرى المهجورة:</b> يمكن لأي لاعب دفع تكلفة ضخمة من الموارد "لإحياء" قرية مهجورة، مما يسمح للاعب المهزوم بالعودة للعبة ببداية جديدة.</li>
+                        <li><b>درع الحماية:</b> يمكنك تفعيل درع من "قاعة المدينة" لحماية قريتك من الهجمات لمدة 24 ساعة. استخدمه بحكمة، فهو مكلف!</li>
+                        <li><b>التحالف (الطلبات):</b> يمكنك طلب الموارد أو الجنود من أي لاعب آخر في اللعبة عبر تبويب "التحالف". ساعد حلفاءك وكن قوة لا يستهان بها!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="prompt-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="prompt-modal-title" class="text-xl font-bold text-yellow-400 mb-4"></h3>
+            <div id="prompt-modal-content">
+                <label id="prompt-modal-label" for="prompt-modal-input" class="block text-gray-300 mb-2"></label>
+                <input type="number" id="prompt-modal-input" class="w-full p-2 bg-gray-700 rounded border border-gray-600" min="1" value="1">
+            </div>
+            <div class="flex justify-end gap-x-3 mt-6">
+                <button id="prompt-modal-cancel-btn" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded">إلغاء</button>
+                <button id="prompt-modal-confirm-btn" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+            <h3 id="confirm-modal-title" class="text-xl font-bold text-yellow-400 mb-2"></h3>
+            <p id="confirm-modal-text" class="text-gray-300 mb-6"></p>
+            <div class="flex justify-center gap-x-4">
+                <button id="confirm-modal-cancel-btn" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded">لا</button>
+                <button id="confirm-modal-confirm-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded">نعم</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="request-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                 <h3 id="request-modal-title" class="text-2xl font-bold text-yellow-400">طلب مساعدة</h3>
+                 <button class="close-modal-btn text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <form id="request-form">
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">نوع الطلب:</label>
+                    <select id="request-type-select" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                        <option value="resource">موارد</option>
+                        <option value="troops">جنود</option>
+                    </select>
+                </div>
+                <div id="request-details-resource" class="mb-4">
+                     <label class="block text-gray-300 mb-2">نوع المورد:</label>
+                     <select id="request-resource-select" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                        <option value="wood">خشب</option>
+                        <option value="stone">حجر</option>
+                        <option value="iron">حديد</option>
+                        <option value="wheat">قمح</option>
+                        <option value="gold">ذهب</option>
+                    </select>
+                </div>
+                <div id="request-details-troops" class="hidden mb-4">
+                     <label class="block text-gray-300 mb-2">نوع الوحدة:</label>
+                     <select id="request-unit-select" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                        <option value="fighter">مقاتل</option>
+                        <option value="archer">رامي سهام</option>
+                        <option value="knight">فارس</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="request-amount" class="block text-gray-300 mb-2">الكمية:</label>
+                    <input type="number" id="request-amount" class="w-full p-2 bg-gray-700 rounded border border-gray-600" min="1" value="100" required>
+                </div>
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg transition-colors">إرسال الطلب</button>
+            </form>
+        </div>
+    </div>
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, updateDoc, arrayUnion, arrayRemove, collection, getDocs, writeBatch, runTransaction, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // --- إعدادات اللعبة ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAeLDfHnZQ2VPzTXRzX4LG2CspnY09Pp6k",
+        authDomain: "chat-11b02.firebaseapp.com",
+        projectId: "chat-11b02",
+        storageBucket: "chat-11b02.appspot.com",
+        messagingSenderId: "837639744108",
+        appId: "1:837639744108:web:99b97ffbf2b891a70c4649"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- تعريفات المباني والوحدات ---
+    const BUILDING_DEFINITIONS = {
+        town_hall: { 
+            name: 'قاعة المدينة', icon: 'fa-landmark', 
+            description: 'قلب قريتك. توفر سعة تخزين وسكان أساسية.', 
+            costs: (level) => ({ wood: 100 * level, stone: 120 * level, iron: 50 * level, time: 30 * level }),
+            base_storage: { wood: 2000, stone: 2000, iron: 1500, wheat: 2500, gold: 100000 },
+            base_population: 50
+        },
+        woodcutter: { 
+            name: 'منشرة الخشب', icon: 'fa-tree', 
+            description: 'تنتج الخشب.', 
+            production: { resource: 'wood', rate: 10 }, 
+            costs: (level) => ({ wood: 40 * level, stone: 60 * level, time: 10 * level }) 
+        },
+        quarry: { 
+            name: 'المحجر', icon: 'fa-gem', 
+            description: 'ينتج الحجر.', 
+            production: { resource: 'stone', rate: 10 }, 
+            costs: (level) => ({ wood: 60 * level, stone: 40 * level, time: 10 * level }) 
+        },
+        iron_mine: { 
+            name: 'منجم الحديد', icon: 'fa-cog', 
+            description: 'ينتج الحديد.', 
+            production: { resource: 'iron', rate: 8 }, 
+            costs: (level) => ({ wood: 80 * level, stone: 100 * level, time: 15 * level }) 
+        },
+        farm: { 
+            name: 'مزرعة', icon: 'fa-wheat-awn', 
+            description: 'تنتج القمح وتزيد من سعة تخزينه.', 
+            production: { resource: 'wheat', rate: 15 }, 
+            costs: (level) => ({ wood: 50 * level, stone: 50 * level, time: 8 * level }),
+            storage: (level) => ({ wheat: 1500 * Math.pow(1.2, level - 1) })
+        },
+        warehouse: { 
+            name: 'المخزن', icon: 'fa-warehouse', 
+            description: 'يزيد سعة تخزين الخشب والحجر والحديد.', 
+            costs: (level) => ({ wood: 100 * level, stone: 100 * level, time: 20 * level }),
+            storage: (level) => ({ 
+                wood: 2000 * Math.pow(1.2, level - 1), 
+                stone: 2000 * Math.pow(1.2, level - 1), 
+                iron: 1500 * Math.pow(1.2, level - 1) 
+            })
+        },
+        house: { 
+            name: 'مسكن', icon: 'fa-house', 
+            description: 'يزيد الحد الأقصى لعدد السكان المتاح لجيشك.', 
+            costs: (level) => ({ wood: 70 * level, stone: 30 * level, time: 12 * level }),
+            population: (level) => 40 * Math.pow(1.18, level - 1)
+        },
+        barracks: { 
+            name: 'الثكنات', icon: 'fa-shield-halved', 
+            description: 'تدريب وحدات المشاة والفرسان.', 
+            costs: (level) => ({ wood: 150 * level, stone: 100 * level, iron: 50 * level, time: 25 * level }) 
+        },
+    };
+    const UNIT_DEFINITIONS = {
+        fighter: { name: 'مقاتل', icon: 'fa-khanda', attack: 10, defense: 10, costs: { wood: 50, wheat: 40, gold: 10, time: 10 }, population: 1 },
+        archer: { name: 'رامي سهام', icon: 'fa-bullseye', attack: 15, defense: 5, costs: { wood: 60, iron: 10, wheat: 50, gold: 15, time: 15 }, population: 1 },
+        knight: { name: 'فارس', icon: 'fa-chess-knight', attack: 30, defense: 30, costs: { iron: 80, wheat: 100, gold: 50, time: 30 }, population: 2 },
+    };
+
+    // --- عناصر الواجهة وحالة اللعبة ---
+    const elements = {
+        loginScreen: document.getElementById('login-screen'),
+        loader: document.getElementById('loader'),
+        gameUI: document.getElementById('game-ui'),
+        villageGrid: document.getElementById('village-grid'),
+        infoContent: document.getElementById('info-content'),
+        loginForm: document.getElementById('login-form'),
+        loginError: document.getElementById('login-error'),
+        logoutButton: document.getElementById('logout-button'),
+        villageName: document.getElementById('village-name'),
+        buildModal: document.getElementById('build-modal'),
+        buildOptions: document.getElementById('build-options'),
+        toastContainer: document.getElementById('toast-container'),
+        armyList: document.getElementById('army-list'),
+        showVillageBtn: document.getElementById('show-village-btn'),
+        showMapBtn: document.getElementById('show-map-btn'),
+        villageView: document.getElementById('village-view'),
+        worldMapView: document.getElementById('world-map-view'),
+        worldMapList: document.getElementById('world-map-list'),
+        attackModal: document.getElementById('attack-modal'),
+        attackModalTitle: document.getElementById('attack-modal-title'),
+        attackArmySelection: document.getElementById('attack-army-selection'),
+        confirmAttackBtn: document.getElementById('confirm-attack-btn'),
+        reportsList: document.getElementById('reports-list'),
+        showAllianceBtn: document.getElementById('show-alliance-btn'),
+        allianceView: document.getElementById('alliance-view'),
+        incomingRequests: document.getElementById('incoming-requests'),
+        outgoingRequests: document.getElementById('outgoing-requests'),
+        showAllReportsBtn: document.getElementById('show-all-reports-btn'),
+        reportsArchiveModal: document.getElementById('reports-archive-modal'),
+        reportsArchiveList: document.getElementById('reports-archive-list'),
+        helpIcon: document.getElementById('help-icon'),
+        helpModal: document.getElementById('help-modal'),
+        promptModal: document.getElementById('prompt-modal'),
+        promptModalTitle: document.getElementById('prompt-modal-title'),
+        promptModalLabel: document.getElementById('prompt-modal-label'),
+        promptModalInput: document.getElementById('prompt-modal-input'),
+        promptModalConfirmBtn: document.getElementById('prompt-modal-confirm-btn'),
+        promptModalCancelBtn: document.getElementById('prompt-modal-cancel-btn'),
+        confirmModal: document.getElementById('confirm-modal'),
+        confirmModalTitle: document.getElementById('confirm-modal-title'),
+        confirmModalText: document.getElementById('confirm-modal-text'),
+        confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
+        confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
+        requestModal: document.getElementById('request-modal'),
+        requestForm: document.getElementById('request-form'),
+    };
+    let currentUser = null, villageUnsubscribe = null, gameLoopInterval = null, requestsUnsubscribe = null, gameState = {}, allVillages = [];
+    let promptCallback = null, confirmCallback = null;
+    let lastSaveTime = Date.now();
+    let saveInterval = 30000; // Save every 30 seconds
+
+    // --- دوال اللعبة الرئيسية ---
+
+    async function saveGameData(force = false) {
+        if (!currentUser || !gameState) return;
+
+        if (!force && Date.now() - lastSaveTime < saveInterval) return;
+
+        const villageRef = doc(db, "users", currentUser.uid);
+        try {
+            await updateDoc(villageRef, {
+                resources: gameState.resources,
+                lastUpdated: serverTimestamp()
+            });
+            lastSaveTime = Date.now();
+            console.log("Game data saved.");
+        } catch (error) {
+            console.error("Failed to save game data:", error);
+        }
+    }
+    
+    window.addEventListener('beforeunload', (event) => {
+        saveGameData(true); // Force save on exit
+    });
+
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            currentUser = user;
+            elements.loginScreen.style.display = 'none';
+            elements.loader.style.display = 'flex';
+            const abandonedScreen = document.getElementById('abandoned-screen');
+            if (abandonedScreen) abandonedScreen.style.display = 'none';
+            loadOrCreateVillage(user);
+        } else {
+            currentUser = null;
+            elements.gameUI.style.display = 'none';
+            elements.loader.style.display = 'none';
+            elements.loginScreen.style.display = 'flex';
+            const abandonedScreen = document.getElementById('abandoned-screen');
+            if (abandonedScreen) abandonedScreen.style.display = 'none';
+            if (villageUnsubscribe) villageUnsubscribe();
+            if (requestsUnsubscribe) requestsUnsubscribe();
+            if (gameLoopInterval) clearInterval(gameLoopInterval);
+        }
+    });
+
+    elements.loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        elements.loginError.textContent = '';
+        signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
+            .catch(() => { elements.loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'; });
+    });
+
+    elements.logoutButton.addEventListener('click', () => signOut(auth));
+    
+    async function loadOrCreateVillage(user) {
+        const villageRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(villageRef);
+        
+        const desiredName = user.email ? user.email.split('@')[0] : `لاعب_${user.uid.substring(0, 5)}`;
+
+        if (!docSnap.exists()) {
+            const newVillageData = {
+                userId: user.uid,
+                villageName: desiredName,
+                status: 'active',
+                shieldUntil: null,
+                resources: { wood: 500, stone: 500, iron: 500, wheat: 500, gold: 100 },
+                buildings: [{ id: 'town_hall', level: 1, position: 45, health: 100 }],
+                army: {},
+                buildQueue: [], trainQueue: [], reports: [],
+                lastUpdated: serverTimestamp()
+            };
+            await setDoc(villageRef, newVillageData);
+        } else {
+            const currentData = docSnap.data();
+            if (!currentData.villageName) {
+                await updateDoc(villageRef, { villageName: desiredName });
+            }
+        }
+        
+        if (villageUnsubscribe) villageUnsubscribe();
+        villageUnsubscribe = onSnapshot(villageRef, snapshot => {
+            const villageData = snapshot.data();
+            if (villageData) initializeGameState(villageData);
+        });
+    }
+
+    function initializeGameState(villageData) {
+        if (gameLoopInterval) clearInterval(gameLoopInterval);
+        gameState = JSON.parse(JSON.stringify(villageData));
+        
+        gameState.resources = gameState.resources || { wood: 500, stone: 500, iron: 500, wheat: 500, gold: 100 };
+        gameState.buildings = gameState.buildings || [];
+        gameState.buildQueue = gameState.buildQueue || [];
+        gameState.trainQueue = gameState.trainQueue || [];
+        gameState.army = gameState.army || {};
+        gameState.reports = gameState.reports || [];
+        gameState.shieldUntil = gameState.shieldUntil || null;
+        gameState.status = gameState.status || 'active';
+
+        // ✅ FIX: Check for abandoned status early and stop execution if true
+        if (gameState.status === 'abandoned') {
+            showAbandonedScreen();
+            elements.loader.style.display = 'none';
+            return;
+        }
+        
+        elements.villageName.textContent = gameState.villageName;
+        
+        const now = Date.now();
+        const lastUpdated = (gameState.lastUpdated?.toDate) ? gameState.lastUpdated.toDate().getTime() : now;
+        const elapsedSeconds = (now - lastUpdated) / 1000;
+        
+        if (elapsedSeconds > 0) {
+            const productionPerSecond = calculateProductionRate(gameState.buildings);
+            const capacities = calculateCapacities(gameState.buildings);
+            for (const resource in productionPerSecond) {
+                const currentAmount = gameState.resources[resource] || 0;
+                const producedAmount = productionPerSecond[resource] * elapsedSeconds;
+                const maxAmount = capacities.storage[resource] || Infinity;
+                gameState.resources[resource] = Math.min(currentAmount + producedAmount, maxAmount);
+            }
+        }
+
+        gameLoopInterval = setInterval(gameLoop, 1000);
+
+        elements.loader.style.display = 'none';
+        elements.gameUI.style.display = 'block';
+        
+        showProductionDashboard();
+    }
+
+    // ✅ FIX: Rewrote this function to be non-destructive
+    function showAbandonedScreen() {
+        elements.loginScreen.style.display = 'none';
+        elements.gameUI.style.display = 'none';
+        elements.loader.style.display = 'none';
+
+        let abandonedScreen = document.getElementById('abandoned-screen');
+        if (abandonedScreen) {
+            abandonedScreen.style.display = 'flex';
+            return;
+        }
+
+        abandonedScreen = document.createElement('div');
+        abandonedScreen.id = 'abandoned-screen';
+        abandonedScreen.className = 'fixed inset-0 bg-gray-900 flex flex-col justify-center items-center z-50 text-center p-4';
+        abandonedScreen.innerHTML = `
+            <i class="fas fa-skull-crossbones text-8xl text-red-500 mb-6"></i>
+            <h1 class="text-4xl font-bold text-yellow-400">لقد دُمرت قريتك!</h1>
+            <p class="text-lg text-gray-300 mt-4">أصبحت قريتك الآن مهجورة على خريطة العالم.</p>
+            <p class="text-md text-gray-400 mt-2">يمكن للاعب آخر أن يقوم بإحيائك من خلال دفع تكلفة من الموارد، مما سيمنحك بداية جديدة.</p>
+            <button id="logout-abandoned" class="mt-8 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded">تسجيل الخروج</button>
+        `;
+        document.body.appendChild(abandonedScreen);
+        
+        document.getElementById('logout-abandoned').addEventListener('click', () => {
+            signOut(auth).catch(error => console.error("Logout failed:", error));
+        });
+    }
+
+    function gameLoop() {
+        if (!gameState || gameState.status === 'abandoned') {
+            clearInterval(gameLoopInterval);
+            return;
+        }
+
+        const productionPerSecond = calculateProductionRate(gameState.buildings);
+        const capacities = calculateCapacities(gameState.buildings);
+
+        for (const resource in productionPerSecond) {
+            const currentAmount = gameState.resources[resource] || 0;
+            const producedAmount = productionPerSecond[resource];
+            const maxAmount = capacities.storage[resource] || Infinity;
+            gameState.resources[resource] = Math.min(currentAmount + producedAmount, maxAmount);
+        }
+        
+        checkBuildQueue();
+        checkTrainQueue();
+        renderAll();
+        saveGameData();
+    }
+
+    function checkBuildQueue() {
+        const now = Date.now();
+        const completedJobs = gameState.buildQueue.filter(job => job.completionTime <= now);
+        
+        if (completedJobs.length > 0) {
+            completedJobs.forEach(job => {
+                const existingBuildingIndex = gameState.buildings.findIndex(b => b.position === job.position);
+                if (existingBuildingIndex > -1) {
+                    gameState.buildings[existingBuildingIndex].level++;
+                    gameState.buildings[existingBuildingIndex].health = 100;
+                } else {
+                    gameState.buildings.push({ id: job.buildingId, level: 1, position: job.position, health: 100 });
+                }
+            });
+            const villageRef = doc(db, "users", currentUser.uid);
+            updateDoc(villageRef, {
+                buildings: gameState.buildings,
+                buildQueue: arrayRemove(...completedJobs)
+            }).then(() => showToast('اكتمل البناء!', 'success'));
+        }
+    }
+
+    function checkTrainQueue() {
+        const now = Date.now();
+        const completedJobs = gameState.trainQueue.filter(job => job.completionTime <= now);
+        
+        if (completedJobs.length > 0) {
+            completedJobs.forEach(job => {
+                gameState.army[job.unitId] = (gameState.army[job.unitId] || 0) + 1;
+            });
+            const villageRef = doc(db, "users", currentUser.uid);
+            updateDoc(villageRef, {
+                army: gameState.army,
+                trainQueue: arrayRemove(...completedJobs)
+            }).then(() => showToast('اكتمل التدريب!', 'success'));
+        }
+    }
+
+    async function startBuildProcess(buildingId, targetLevel, position) {
+        const costs = BUILDING_DEFINITIONS[buildingId].costs(targetLevel);
+        if (Object.keys(costs).some(res => res !== 'time' && (gameState.resources[res] || 0) < costs[res])) {
+            return showToast('لا توجد موارد كافية!', 'error');
+        }
+        
+        const newResources = { ...gameState.resources };
+        Object.keys(costs).forEach(res => { if(res !== 'time') newResources[res] -= costs[res]; });
+
+        const newJob = {
+            buildingId, targetLevel, position,
+            completionTime: Date.now() + costs.time * 1000
+        };
+        
+        const villageRef = doc(db, "users", currentUser.uid);
+        await updateDoc(villageRef, {
+            resources: newResources,
+            buildQueue: arrayUnion(newJob)
+        });
+        showToast('بدأ البناء!', 'info');
+        elements.buildModal.style.display = 'none';
+        showProductionDashboard();
+    }
+    
+    async function startTrainProcess(unitId, amount) {
+        if (!amount || amount <= 0) return;
+
+        const capacities = calculateCapacities(gameState.buildings);
+        const currentPopulation = Object.values(gameState.army).reduce((sum, count) => sum + count, 0);
+        const neededPopulation = UNIT_DEFINITIONS[unitId].population * amount;
+        
+        if (currentPopulation + neededPopulation > capacities.population) {
+            return showToast(`لا يوجد مساكن كافية! تحتاج ${neededPopulation} من السكان.`, 'error');
+        }
+
+        const def = UNIT_DEFINITIONS[unitId];
+        const totalCosts = {};
+        Object.keys(def.costs).forEach(res => { totalCosts[res] = def.costs[res] * amount; });
+
+        if (Object.keys(totalCosts).some(res => res !== 'time' && (gameState.resources[res] || 0) < totalCosts[res])) {
+            return showToast('لا توجد موارد كافية لتدريب هذا العدد!', 'error');
+        }
+        
+        const newResources = { ...gameState.resources };
+        Object.keys(totalCosts).forEach(res => { if(res !== 'time') newResources[res] -= totalCosts[res]; });
+
+        const newJobs = [];
+        let lastCompletionTime = Math.max(Date.now(), ...(gameState.trainQueue.map(j => j.completionTime)));
+
+        for (let i = 0; i < amount; i++) {
+            lastCompletionTime += def.costs.time * 1000;
+            newJobs.push({ unitId, completionTime: lastCompletionTime });
+        }
+        
+        const villageRef = doc(db, "users", currentUser.uid);
+        await updateDoc(villageRef, {
+            resources: newResources,
+            trainQueue: arrayUnion(...newJobs)
+        });
+        showToast(`بدأ تدريب ${amount} ${def.name}!`, 'info');
+    }
+
+    function renderAll() {
+        if (!gameState) return;
+        const capacities = calculateCapacities(gameState.buildings);
+        renderResources(gameState.resources, capacities.storage);
+        renderPopulation(gameState.army, capacities.population);
+        renderVillageGrid(gameState.buildings, gameState.buildQueue);
+        renderArmy(gameState.army);
+        renderReports(gameState.reports);
+    }
+    
+    function renderVillageGrid(buildings, buildQueue) {
+        elements.villageGrid.innerHTML = '';
+        const buildingMap = new Map(buildings.map(b => [b.position, b]));
+        const queueMap = new Map(buildQueue.map(j => [j.position, j]));
+
+        for (let i = 0; i < 100; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell w-16 h-16 border border-gray-700 rounded-md flex justify-center items-center cursor-pointer relative';
+            
+            const building = buildingMap.get(i);
+            const job = queueMap.get(i);
+
+            if (job) {
+                const remainingTime = Math.ceil((job.completionTime - Date.now()) / 1000);
+                cell.innerHTML = `
+                    <i class="fas fa-helmet-safety building-icon opacity-50"></i>
+                    <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-xs">
+                        <span>${remainingTime > 0 ? remainingTime : 0} ث</span>
+                    </div>`;
+                 cell.onclick = () => showProductionDashboard();
+            } else if (building) {
+                const def = BUILDING_DEFINITIONS[building.id];
+                const healthPercentage = building.health || 100;
+                cell.innerHTML = `
+                    <i class="fas ${def.icon} building-icon"></i>
+                    <div class="absolute bottom-0 right-0 bg-yellow-500 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">${building.level}</div>
+                    <div class="absolute top-0 left-0 w-full h-1.5 health-bar-bg rounded-t-md">
+                        <div class="h-full health-bar-fill rounded-t-md" style="width: ${healthPercentage}%;"></div>
+                    </div>
+                `;
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    showBuildingInfo(building);
+                };
+            } else {
+                cell.innerHTML = `<i class="fas fa-plus text-gray-600"></i>`;
+                cell.onclick = (e) => {
+                    e.stopPropagation();
+                    openBuildModal(i);
+                };
+            }
+            elements.villageGrid.appendChild(cell);
+        }
+    }
+
+    function renderResources(resources, storageCapacity) {
+        const formatNumber = (num) => Math.floor(num);
+        document.querySelector('#resource-wood span').textContent = `${formatNumber(resources.wood)} / ${formatNumber(storageCapacity.wood)}`;
+        document.querySelector('#resource-stone span').textContent = `${formatNumber(resources.stone)} / ${formatNumber(storageCapacity.stone)}`;
+        document.querySelector('#resource-iron span').textContent = `${formatNumber(resources.iron)} / ${formatNumber(storageCapacity.iron)}`;
+        document.querySelector('#resource-wheat span').textContent = `${formatNumber(resources.wheat)} / ${formatNumber(storageCapacity.wheat)}`;
+        document.querySelector('#resource-gold span').textContent = formatNumber(resources.gold);
+    }
+    
+    function renderPopulation(army, maxPopulation) {
+        const currentPopulation = Object.entries(army).reduce((sum, [unitId, count]) => {
+            const unitDef = UNIT_DEFINITIONS[unitId];
+            return sum + (unitDef.population * count);
+        }, 0);
+        document.querySelector('#population-indicator span').textContent = `${currentPopulation} / ${Math.floor(maxPopulation)}`;
+    }
+
+    function renderArmy(army) {
+        elements.armyList.innerHTML = Object.entries(army).filter(([, count]) => count > 0).map(([unitId, count]) => {
+            const def = UNIT_DEFINITIONS[unitId];
+            return `
+                <div class="flex justify-between items-center bg-gray-700 p-2 rounded">
+                    <span><i class="fas ${def.icon} ml-2"></i> ${def.name}</span>
+                    <span class="font-bold">${count}</span>
+                </div>`;
+        }).join('') || '<p class="text-gray-500 text-sm">لا يوجد لديك جنود بعد.</p>';
+    }
+
+    function showBuildingInfo(building) {
+        if (building.id === 'barracks') return showBarracksInfo(building);
+        
+        const def = BUILDING_DEFINITIONS[building.id];
+        const upgradeCosts = def.costs(building.level + 1);
+        const costsHTML = Object.entries(upgradeCosts).map(([res, val]) => {
+            if (res === 'time') return `⏱️ ${val} ثانية`;
+            const iconMap = { wood: 'fa-tree', stone: 'fa-gem', iron: 'fa-cog' };
+            return `<span class="mx-2">${val} <i class="fas ${iconMap[res]}"></i></span>`;
+        }).join(' | ');
+
+        let productionHTML = '';
+        if (def.production) {
+            const currentProd = (def.production.rate * Math.pow(1.15, building.level - 1));
+            const nextLevelProd = (def.production.rate * Math.pow(1.15, building.level));
+            productionHTML = `
+                <div class="mt-4 text-sm">
+                   <p>الإنتاج الحالي: <span class="font-bold text-green-400">${Math.floor(currentProd)}</span> / ساعة</p>
+                   <p>الإنتاج التالي: <span class="font-bold text-yellow-400">${Math.floor(nextLevelProd)}</span> / ساعة</p>
+                </div>
+            `;
+        }
+
+        let specialButton = `<button id="upgrade-btn" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full">تطوير</button>`;
+        if(building.id === 'town_hall') {
+            const shieldCost = { wood: 10000, stone: 10000, iron: 5000, gold: 5000 };
+            const isShielded = gameState.shieldUntil && gameState.shieldUntil > Date.now();
+            const remainingShieldTime = isShielded ? Math.ceil((gameState.shieldUntil - Date.now()) / (1000 * 60)) : 0;
+            specialButton += isShielded
+                ? `<div class="mt-4 p-3 bg-blue-800 rounded-lg text-center">الدرع مفعل (${remainingShieldTime} دقيقة متبقية)</div>`
+                : `<button id="activate-shield-btn" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                    تفعيل درع (24 ساعة)
+                   </button>`;
+        }
+
+        elements.infoContent.innerHTML = `
+            <div class="text-center">
+                <i class="fas ${def.icon} text-5xl text-yellow-400"></i>
+                <h4 class="text-2xl font-bold mt-2">${def.name}</h4>
+                <p class="text-gray-400">المستوى: ${building.level} | الصحة: ${building.health || 100}%</p>
+                <p class="mt-4">${def.description}</p>
+                ${productionHTML}
+                <div class="mt-6 p-4 bg-gray-700 rounded-lg text-sm">
+                    <h5 class="font-bold mb-2">تكلفة التطوير للمستوى ${building.level + 1}:</h5>
+                    <p>${costsHTML}</p>
+                </div>
+                ${specialButton}
+            </div>`;
+        document.getElementById('upgrade-btn').onclick = () => startBuildProcess(building.id, building.level + 1, building.position);
+        if(document.getElementById('activate-shield-btn')) {
+            document.getElementById('activate-shield-btn').onclick = activateShield;
+        }
+    }
+
+    function showProductionDashboard() {
+        const productionPerHour = calculateProductionRate(gameState.buildings, 1);
+        const icons = { wood: 'fa-tree text-green-400', stone: 'fa-gem text-gray-400', iron: 'fa-cog text-blue-400', wheat: 'fa-wheat-awn text-yellow-300' };
+        
+        let productionHTML = Object.entries(productionPerHour)
+            .filter(([, rate]) => rate > 0)
+            .map(([resource, rate]) => `
+            <div class="flex justify-between items-center bg-gray-700 p-2 rounded">
+                <span><i class="fas ${icons[resource]} ml-2"></i> ${resource.charAt(0).toUpperCase() + resource.slice(1)}</span>
+                <span class="font-bold text-green-400">+${Math.floor(rate)}/ساعة</span>
+            </div>
+        `).join('');
+
+        if (productionHTML === '') {
+            productionHTML = '<p class="text-gray-400">لا يوجد إنتاج حالي. قم ببناء حقول الموارد.</p>';
+        }
+
+        elements.infoContent.innerHTML = `
+            <h4 class="text-xl font-bold mb-3 border-b border-gray-600 pb-2">إنتاج القرية</h4>
+            <div class="space-y-2">${productionHTML}</div>
+            <p class="text-xs text-gray-500 mt-4">اختر مبنى لعرض تفاصيله أو انقر على خلفية القرية لإظهار هذا الملخص.</p>
+        `;
+    }
+
+    function showBarracksInfo(building) {
+        const unitsHTML = Object.entries(UNIT_DEFINITIONS).map(([unitId, unitDef]) => {
+            const iconMap = { wood: 'fa-tree', stone: 'fa-gem', iron: 'fa-cog', wheat: 'fa-wheat-awn', gold: 'fa-coins' };
+            const costsHTML = Object.entries(unitDef.costs).map(([res, val]) =>
+                res === 'time' ? `⏱️ ${val} ث` : `<span class="mx-1">${val}<i class="fas ${iconMap[res]} text-yellow-500 text-xs"></i></span>`
+            ).join(' | ');
+
+            return `
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <h5 class="font-bold"><i class="fas ${unitDef.icon} ml-2"></i>${unitDef.name} (السكان: ${unitDef.population})</h5>
+                        <button class="train-btn bg-blue-600 text-xs px-2 py-1 rounded" data-unit-id="${unitId}">تدريب</button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">التكلفة: ${costsHTML}</p>
+                </div>
+            `;
+        }).join('<div class="my-4"></div>');
+
+        elements.infoContent.innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-shield-halved text-5xl text-yellow-400"></i>
+                <h4 class="text-2xl font-bold mt-2">الثكنات</h4>
+                <p class="text-gray-400">المستوى: ${building.level}</p>
+                <div class="mt-4 text-right space-y-4">${unitsHTML}</div>
+            </div>`;
+        
+        document.querySelectorAll('.train-btn').forEach(btn => {
+            btn.onclick = () => {
+                const unitId = btn.dataset.unitId;
+                showPrompt({
+                    title: `تدريب ${UNIT_DEFINITIONS[unitId].name}`,
+                    label: "أدخل العدد الذي تريد تدريبه:",
+                    onConfirm: (amount) => {
+                        if (amount > 0) startTrainProcess(unitId, parseInt(amount));
+                    }
+                });
+            };
+        });
+    }
+    
+    function openBuildModal(position) {
+        elements.buildOptions.innerHTML = '';
+        const buildNodes = Object.entries(BUILDING_DEFINITIONS)
+            .filter(([id]) => !(id === 'town_hall' && gameState.buildings.some(b => b.id === 'town_hall')))
+            .map(([id, def]) => {
+                const costs = def.costs(1);
+                const iconMap = { wood: 'fa-tree', stone: 'fa-gem', iron: 'fa-cog' };
+                const costsHTML = Object.entries(costs).map(([res, val]) =>
+                    res === 'time' ? `⏱️ ${val} ث` : `${val} <i class="fas ${iconMap[res]}"></i>`
+                ).join(' | ');
+
+                const div = document.createElement('div');
+                div.className = 'bg-gray-700 p-4 rounded-lg flex flex-col items-center cursor-pointer hover:bg-gray-600';
+                div.innerHTML = `
+                    <i class="fas ${def.icon} text-3xl text-yellow-400 mb-2"></i>
+                    <h5 class="font-bold">${def.name}</h5>
+                    <p class="text-xs text-gray-400 mt-2 text-center">${def.description}</p>
+                    <p class="text-xs text-gray-300 mt-2">${costsHTML}</p>
+                `;
+                div.onclick = () => startBuildProcess(id, 1, position);
+                return div;
+            });
+        buildNodes.forEach(node => elements.buildOptions.appendChild(node));
+        elements.buildModal.style.display = 'flex';
+    }
+
+    document.querySelectorAll('.close-modal-btn').forEach(btn => {
+        btn.onclick = () => btn.closest('.fixed').style.display = 'none';
+    });
+
+    function showToast(message, type = 'info') {
+        const colors = { info: 'bg-blue-500', success: 'bg-green-500', error: 'bg-red-500' };
+        const toast = document.createElement('div');
+        toast.className = `toast text-white px-4 py-2 rounded-lg shadow-lg mb-2 ${colors[type]}`;
+        toast.textContent = message;
+        elements.toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    function calculateProductionRate(buildings, multiplier = 1 / 3600) { 
+        const production = { wood: 0, stone: 0, iron: 0, wheat: 0 };
+        buildings.forEach(building => {
+            const def = BUILDING_DEFINITIONS[building.id];
+            if (def?.production) {
+                production[def.production.resource] += (def.production.rate * Math.pow(1.15, building.level - 1)) * multiplier;
+            }
+        });
+        return production;
+    }
+
+    function calculateCapacities(buildings) {
+        const townHallDef = BUILDING_DEFINITIONS.town_hall;
+        let storage = { ...townHallDef.base_storage };
+        let population = townHallDef.base_population;
+
+        buildings.forEach(building => {
+            const def = BUILDING_DEFINITIONS[building.id];
+            if (def.storage) {
+                const addedStorage = def.storage(building.level);
+                for (const resource in addedStorage) {
+                    storage[resource] = (storage[resource] || 0) + addedStorage[resource];
+                }
+            }
+            if (def.population) {
+                population += def.population(building.level);
+            }
+        });
+        return { storage, population };
+    }
+    
+    function switchView(activeView) {
+        ['village', 'world-map', 'alliance'].forEach(view => {
+            document.getElementById(`${view}-view`).classList.toggle('view-hidden', view !== activeView);
+            const btnId = view === 'world-map' ? 'show-map-btn' : `show-${view}-btn`;
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.classList.toggle('bg-gray-700', view === activeView);
+                btn.classList.toggle('text-yellow-400', view === activeView);
+                btn.classList.toggle('text-gray-400', view !== activeView);
+            }
+        });
+         if (activeView === 'village') {
+            showProductionDashboard();
+        }
+    }
+
+    elements.showVillageBtn.addEventListener('click', () => switchView('village'));
+    elements.showMapBtn.addEventListener('click', () => {
+        switchView('world-map');
+        loadAndRenderWorldMap();
+    });
+    elements.showAllianceBtn.addEventListener('click', () => {
+        switchView('alliance');
+        loadAndRenderRequests();
+    });
+    elements.villageView.addEventListener('click', (e) => {
+        if (e.target === elements.villageView || e.target === elements.villageGrid) {
+            showProductionDashboard();
+        }
+    });
+
+    async function loadAndRenderWorldMap() {
+        elements.worldMapList.innerHTML = '<p>جاري تحميل القرى...</p>';
+        try {
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            allVillages = usersSnapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(village => village.id !== currentUser.uid);
+            
+            elements.worldMapList.innerHTML = allVillages.length === 0
+                ? '<p>لا يوجد لاعبون آخرون في العالم بعد.</p>'
+                : allVillages.map(village => {
+                    const isShielded = village.shieldUntil && village.shieldUntil.toDate() > new Date();
+                    const isAbandoned = village.status === 'abandoned';
+                    let buttonsHTML = '';
+                    if (isAbandoned) {
+                        buttonsHTML = `<button class="revive-btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded" data-target-id="${village.id}"><i class="fas fa-heart-pulse"></i> إحياء</button>`;
+                    } else if (isShielded) {
+                        buttonsHTML = `<div class="p-2 bg-blue-800 rounded text-sm"><i class="fas fa-shield-alt"></i> محمي</div>`;
+                    } else {
+                        buttonsHTML = `
+                            <button class="attack-btn bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded" data-target-id="${village.id}"><i class="fas fa-khanda"></i> هجوم</button>
+                            <button class="request-btn bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded" data-target-id="${village.id}"><i class="fas fa-hand-holding-hand"></i> طلب</button>
+                        `;
+                    }
+                    return `
+                        <div class="bg-gray-700 p-4 rounded-lg flex justify-between items-center ${isAbandoned ? 'opacity-50' : ''}">
+                            <div>
+                                <h4 class="text-lg font-bold">${village.villageName} ${isShielded ? '<i class="fas fa-shield-alt text-blue-400 ml-2"></i>' : ''} ${isAbandoned ? '<span class="text-red-400 text-sm">(مهجورة)</span>' : ''}</h4>
+                                <p class="text-sm text-gray-400">اللاعب: ${village.id.substring(0,8)}</p>
+                            </div>
+                            <div class="space-x-2 space-x-reverse">${buttonsHTML}</div>
+                        </div>`;
+                }).join('');
+
+            document.querySelectorAll('.attack-btn').forEach(btn => btn.onclick = (e) => openAttackModal(e.currentTarget.dataset.targetId));
+            document.querySelectorAll('.revive-btn').forEach(btn => btn.onclick = (e) => reviveVillage(e.currentTarget.dataset.targetId));
+            document.querySelectorAll('.request-btn').forEach(btn => btn.onclick = (e) => openRequestModal(e.currentTarget.dataset.targetId));
+
+        } catch (error) {
+            console.error("خطأ في تحميل خريطة العالم:", error);
+            elements.worldMapList.innerHTML = '<p class="text-red-500">حدث خطأ أثناء تحميل القرى.</p>';
+        }
+    }
+    
+    function openAttackModal(targetId) {
+        const targetVillage = allVillages.find(v => v.id === targetId);
+        if (!targetVillage) return;
+
+        elements.attackModalTitle.textContent = `الهجوم على ${targetVillage.villageName}`;
+        elements.attackArmySelection.innerHTML = Object.entries(gameState.army).filter(([,count]) => count > 0).map(([unitId, count]) => {
+            const def = UNIT_DEFINITIONS[unitId];
+            return `
+                <div class="flex items-center justify-between">
+                    <label for="unit-${unitId}" class="flex items-center">
+                        <i class="fas ${def.icon} ml-3 text-lg"></i>
+                        <span>${def.name} (المتاح: ${count})</span>
+                    </label>
+                    <input type="number" id="unit-${unitId}" data-unit-id="${unitId}" class="w-24 p-2 bg-gray-700 rounded border border-gray-600" value="0" min="0" max="${count}">
+                </div>
+            `;
+        }).join('');
+        
+        elements.confirmAttackBtn.onclick = () => simulateBattle(targetId);
+        elements.attackModal.style.display = 'flex';
+    }
+
+    async function simulateBattle(targetId) {
+        const attackingArmy = {};
+        let totalTroopsToSend = 0;
+        let invalidInput = false;
+
+        document.querySelectorAll('#attack-army-selection input').forEach(input => {
+            const unitId = input.dataset.unitId;
+            let amount = parseInt(input.value, 10) || 0;
+            const available = gameState.army[unitId] || 0;
+            
+            if (amount < 0) amount = 0;
+
+            if (amount > available) {
+                invalidInput = true;
+                input.classList.add('border-red-500');
+            } else {
+                input.classList.remove('border-red-500');
+            }
+
+            if (amount > 0) {
+                attackingArmy[unitId] = amount;
+                totalTroopsToSend += amount;
+            }
+        });
+
+        if (invalidInput) {
+            return showToast('لا يمكنك إرسال جنود أكثر مما تملك!', 'error');
+        }
+        
+        if (totalTroopsToSend === 0) {
+            return showToast('يجب إرسال جندي واحد على الأقل!', 'error');
+        }
+
+        elements.attackModal.style.display = 'none';
+        showToast('بدأ الهجوم!', 'info');
+
+        const targetDoc = await getDoc(doc(db, "users", targetId));
+        if (!targetDoc.exists()) return showToast('القرية المستهدفة غير موجودة.', 'error');
+        
+        const targetVillage = targetDoc.data();
+        targetVillage.army = targetVillage.army || {};
+        targetVillage.resources = targetVillage.resources || {};
+        targetVillage.buildings = targetVillage.buildings || [];
+
+        if (targetVillage.shieldUntil && targetVillage.shieldUntil.toDate() > new Date()) {
+            return showToast('لا يمكن مهاجمة هذه القرية الآن (محمية).', 'error');
+        }
+        
+        const battleTime = new Date();
+        const batch = writeBatch(db);
+        const attackerRef = doc(db, "users", currentUser.uid);
+        const defenderRef = doc(db, "users", targetId);
+
+        // --- START: NEW BATTLE LOGIC ---
+
+        const defenderTroopCount = Object.values(targetVillage.army).reduce((sum, count) => sum + count, 0);
+
+        // 1. Overwhelming Force Rule
+        if (defenderTroopCount > 0 && totalTroopsToSend < (defenderTroopCount / 3)) {
+            const attackerLosses = { ...attackingArmy };
+            const newAttackerArmy = { ...gameState.army };
+            Object.keys(attackerLosses).forEach(id => newAttackerArmy[id] -= attackerLosses[id]);
+
+            const attackerReport = { id: `report_${Date.now()}`, type: 'attack', result: 'defeat', targetName: targetVillage.villageName, sent: attackingArmy, losses: attackerLosses, plundered: {}, timestamp: battleTime };
+            const defenderReport = { id: `report_${Date.now()}`, type: 'defense', result: 'victory', attackerName: gameState.villageName, defenderArmy: targetVillage.army, losses: {}, plundered: {}, timestamp: battleTime };
+
+            batch.update(attackerRef, { army: newAttackerArmy, reports: arrayUnion(attackerReport) });
+            batch.update(defenderRef, { reports: arrayUnion(defenderReport) });
+            
+            await batch.commit();
+            return showToast('لقد هُزمت! كان جيش العدو أكبر من أن تهزمه.', 'error');
+        }
+
+        // 2. Calculate Army Powers
+        let attackerAttackPower = 0;
+        let attackerDefensePower = 0;
+        Object.entries(attackingArmy).forEach(([id, count]) => {
+            attackerAttackPower += UNIT_DEFINITIONS[id].attack * count;
+            attackerDefensePower += UNIT_DEFINITIONS[id].defense * count;
+        });
+
+        let defenderAttackPower = 0;
+        let defenderDefensePower = 0;
+        Object.entries(targetVillage.army).forEach(([id, count]) => {
+            defenderAttackPower += UNIT_DEFINITIONS[id].attack * count;
+            defenderDefensePower += UNIT_DEFINITIONS[id].defense * count;
+        });
+
+        // 3. Apply Defender Bonus
+        if (defenderTroopCount > 0) {
+            const defenderBonus = 1.25; // 25% bonus
+            defenderAttackPower *= defenderBonus;
+            defenderDefensePower *= defenderBonus;
+        }
+
+        // 4. Handle Attack on Empty Village
+        if (defenderTroopCount === 0 && attackerAttackPower > 0) {
+            const damagePerPower = 0.1;
+            let totalDamage = Math.floor(attackerAttackPower * damagePerPower);
+            let updatedBuildings = [...targetVillage.buildings];
+            
+            for (let i=0; i < totalDamage; i++) {
+                if (updatedBuildings.length === 0) break;
+                let buildingIndex = Math.floor(Math.random() * updatedBuildings.length);
+                updatedBuildings[buildingIndex].health = (updatedBuildings[buildingIndex].health || 100) - 1;
+            }
+
+            let townHallDestroyed = false;
+            const finalBuildings = updatedBuildings.filter(b => {
+                if (b.health <= 0) {
+                    if (b.id === 'town_hall') townHallDestroyed = true;
+                    return false;
+                }
+                return true;
+            });
+
+            batch.update(defenderRef, { buildings: finalBuildings });
+            
+            if (townHallDestroyed) {
+                batch.update(defenderRef, { status: 'abandoned', army: {}, reports: arrayUnion({ type: 'system', message: 'لقد دمرت قريتك!', timestamp: battleTime }) });
+            }
+        }
+
+        // 5. Calculate Loss Ratios
+        const attackerLossRatio = attackerDefensePower > 0 ? Math.min(defenderAttackPower / attackerDefensePower, 1) : 1;
+        const defenderLossRatio = defenderDefensePower > 0 ? Math.min(attackerAttackPower / defenderDefensePower, 1) : 1;
+        
+        const attackerWon = defenderLossRatio > attackerLossRatio;
+
+        // 6. Calculate Actual Losses
+        const newAttackerArmy = { ...gameState.army };
+        const newDefenderArmy = { ...targetVillage.army };
+        const attackerLosses = {};
+        const defenderLosses = {};
+
+        Object.entries(attackingArmy).forEach(([id, count]) => {
+            const lossCount = Math.round(count * attackerLossRatio);
+            if (lossCount > 0) {
+                newAttackerArmy[id] -= lossCount;
+                attackerLosses[id] = lossCount;
+            }
+        });
+
+        Object.entries(targetVillage.army).forEach(([id, count]) => {
+            const lossCount = Math.round(count * defenderLossRatio);
+            if (lossCount > 0) {
+                newDefenderArmy[id] -= lossCount;
+                defenderLosses[id] = lossCount;
+            }
+        });
+
+        // 7. Calculate Plunder
+        const plunderedResources = {};
+        const newAttackerResources = { ...gameState.resources };
+        const newDefenderResources = { ...targetVillage.resources };
+
+        if (attackerWon) {
+            const plunderRate = defenderTroopCount > 0 ? 0.10 : 0.25; // Plunder more if no troops
+            Object.keys(gameState.resources).forEach(res => {
+                const amount = Math.floor((targetVillage.resources[res] || 0) * plunderRate);
+                if (amount > 0) {
+                    plunderedResources[res] = amount;
+                    newAttackerResources[res] += amount;
+                    newDefenderResources[res] -= amount;
+                }
+            });
+        }
+        
+        // 8. Create Reports and Update Database
+        const reportId = `report_${Date.now()}`;
+        const attackerReport = { id: reportId, type: 'attack', result: attackerWon ? 'victory' : 'defeat', targetName: targetVillage.villageName, sent: attackingArmy, losses: attackerLosses, plundered: plunderedResources, timestamp: battleTime };
+        const defenderReport = { id: reportId, type: 'defense', result: attackerWon ? 'defeat' : 'victory', attackerName: gameState.villageName, defenderArmy: targetVillage.army, losses: defenderLosses, plundered: plunderedResources, timestamp: battleTime };
+
+        batch.update(attackerRef, { army: newAttackerArmy, resources: newAttackerResources, reports: arrayUnion(attackerReport) });
+        batch.update(defenderRef, { army: newDefenderArmy, resources: newDefenderResources, reports: arrayUnion(defenderReport) });
+        
+        await batch.commit();
+        showToast(attackerWon ? 'لقد انتصرت في المعركة!' : 'لقد هُزمت!', attackerWon ? 'success' : 'error');
+        
+        // --- END: NEW BATTLE LOGIC ---
+    }
+
+
+    async function activateShield() {
+        const shieldCost = { wood: 10000, stone: 10000, iron: 5000, gold: 5000 };
+        if (Object.keys(shieldCost).some(res => gameState.resources[res] < shieldCost[res])) {
+            return showToast('لا توجد موارد كافية لتفعيل الدرع!', 'error');
+        }
+        
+        const newResources = { ...gameState.resources };
+        Object.keys(shieldCost).forEach(res => newResources[res] -= shieldCost[res]);
+        
+        const shieldEndTime = Date.now() + 24 * 60 * 60 * 1000;
+        
+        await updateDoc(doc(db, "users", currentUser.uid), {
+            resources: newResources,
+            shieldUntil: new Date(shieldEndTime)
+        });
+        
+        showToast('تم تفعيل درع الحماية لمدة 24 ساعة!', 'success');
+        showBuildingInfo(gameState.buildings.find(b => b.id === 'town_hall'));
+    }
+    
+    async function reviveVillage(targetId) {
+        const reviveCost = { wood: 50000, stone: 50000, iron: 25000, gold: 10000 };
+        const revivalGrant = { wood: 2000, stone: 2000, iron: 500, wheat: 2000, gold: 500 };
+
+        if (Object.keys(reviveCost).some(res => gameState.resources[res] < reviveCost[res])) {
+            return showToast('ليس لديك الموارد الكافية لإحياء هذه القرية!', 'error');
+        }
+
+        showConfirmation({
+            title: "تأكيد الإحياء",
+            text: "هل أنت متأكد من أنك تريد دفع تكلفة الإحياء؟",
+            onConfirm: async (confirmed) => {
+                if (!confirmed) return;
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const reviverRef = doc(db, "users", currentUser.uid);
+                        const targetRef = doc(db, "users", targetId);
+                        const reviverDoc = await transaction.get(reviverRef);
+                        if (!reviverDoc.exists()) throw "لم يتم العثور على اللاعب!";
+
+                        const newReviverResources = { ...reviverDoc.data().resources };
+                        Object.keys(reviveCost).forEach(res => newReviverResources[res] -= reviveCost[res]);
+                        transaction.update(reviverRef, { resources: newReviverResources });
+
+                        transaction.update(targetRef, {
+                            status: 'active',
+                            resources: revivalGrant,
+                            buildings: [{ id: 'town_hall', level: 1, position: 45, health: 100 }],
+                            army: {},
+                            buildQueue: [],
+                            trainQueue: [],
+                            reports: arrayUnion({type: 'system', message: `تم إحياء قريتك بواسطة ${gameState.villageName}!`, timestamp: new Date()})
+                        });
+                    });
+                    showToast('تم إحياء القرية بنجاح!', 'success');
+                    loadAndRenderWorldMap();
+                } catch (error) {
+                    console.error("خطأ في عملية الإحياء: ", error);
+                    showToast('فشلت عملية الإحياء.', 'error');
+                }
+            }
+        });
+    }
+
+    // ✅ FIX: New helper function to safely handle both Firestore Timestamps and JS Dates
+    function safeGetDate(timestamp) {
+        if (!timestamp) return new Date(); // Fallback for missing timestamps
+        if (timestamp.toDate) {
+            return timestamp.toDate(); // It's a Firestore Timestamp
+        }
+        return new Date(timestamp); // It's likely already a Date object or can be parsed
+    }
+
+    function renderReports(reports) {
+        if (!reports || reports.length === 0) {
+            elements.reportsList.innerHTML = '<p class="text-gray-500 text-sm">لا توجد تقارير جديدة.</p>';
+            return;
+        }
+        // Use the safe date conversion for sorting
+        const sortedReports = [...reports].sort((a, b) => safeGetDate(b.timestamp) - safeGetDate(a.timestamp));
+        
+        elements.reportsList.innerHTML = sortedReports.slice(0, 5).map(report => formatReportHTML(report)).join('');
+        elements.reportsArchiveList.innerHTML = sortedReports.map(report => formatReportHTML(report, true)).join('');
+    }
+
+    function formatReportHTML(report, isDetailed = false) {
+        if (report.type === 'system') {
+            return `<div class="bg-gray-700 p-2 rounded text-sm"><i class="fas fa-info-circle text-cyan-400 ml-3"></i> ${report.message}</div>`
+        }
+        const isVictory = report.result === 'victory';
+        const isAttack = report.type === 'attack';
+        const title = isAttack ? `الهجوم على ${report.targetName}` : `الدفاع ضد ${report.attackerName}`;
+        const icon = isAttack
+            ? (isVictory ? 'fa-khanda text-green-500' : 'fa-skull-crossbones text-red-500')
+            : (isVictory ? 'fa-shield-halved text-green-500' : 'fa-house-damage text-red-500');
+            
+        // Use the safe date conversion for display
+        const reportTime = safeGetDate(report.timestamp).toLocaleString('ar-EG');
+        
+        let detailsHTML = '';
+        if (isDetailed) {
+            const losses = Object.entries(report.losses || {}).map(([id,c])=>`${c} ${UNIT_DEFINITIONS[id].name}`).join(', ');
+            const plundered = Object.entries(report.plundered || {}).filter(([,c])=>c>0).map(([id,c])=>`${Math.floor(c)} ${id}`).join(', ');
+            detailsHTML = `
+                <div class="text-xs text-gray-400 mt-1 pl-8">
+                    ${losses ? `الخسائر: ${losses}` : 'لم تفقد أي جنود.'}
+                    ${plundered ? `<br>الغنائم: ${plundered}` : ''}
+                </div>
+            `;
+        }
+        return `
+            <div class="bg-gray-700 p-2 rounded text-sm hover:bg-gray-600">
+                <div class="flex items-center justify-between">
+                    <div><i class="fas ${icon} ml-3"></i><span class="font-bold">${title}</span></div>
+                    <span class="text-xs text-gray-400">${reportTime}</span>
+                </div>
+                ${detailsHTML}
+            </div>
+        `;
+    }
+    elements.showAllReportsBtn.onclick = () => elements.reportsArchiveModal.style.display = 'flex';
+
+    elements.helpIcon.onclick = () => elements.helpModal.style.display = 'flex';
+    
+    function openRequestModal(targetId) {
+        const targetVillage = allVillages.find(v => v.id === targetId);
+        if (!targetVillage) return;
+
+        document.getElementById('request-modal-title').textContent = `طلب مساعدة من ${targetVillage.villageName}`;
+        elements.requestForm.onsubmit = (e) => {
+            e.preventDefault();
+            const requestType = document.getElementById('request-type-select').value;
+            const amount = parseInt(document.getElementById('request-amount').value);
+            let details;
+            if (requestType === 'resource') {
+                details = { type: document.getElementById('request-resource-select').value, amount };
+            } else {
+                details = { type: document.getElementById('request-unit-select').value, amount };
+            }
+            if (amount > 0) {
+                createRequest(targetId, requestType, details);
+            }
+            elements.requestModal.style.display = 'none';
+        };
+
+        elements.requestModal.style.display = 'flex';
+    }
+
+    document.getElementById('request-type-select').addEventListener('change', (e) => {
+        const isResource = e.target.value === 'resource';
+        document.getElementById('request-details-resource').style.display = isResource ? 'block' : 'none';
+        document.getElementById('request-details-troops').style.display = isResource ? 'none' : 'block';
+    });
+
+
+    async function createRequest(targetId, type, details) {
+        const targetVillage = allVillages.find(v => v.id === targetId);
+        if (!targetVillage) return showToast("لم يتم العثور على اللاعب المستهدف.", "error");
+
+        const requestId = `req_${Date.now()}`;
+        await setDoc(doc(db, "requests", requestId), {
+            fromId: currentUser.uid,
+            fromName: gameState.villageName,
+            toId: targetId,
+            toName: targetVillage.villageName,
+            involvedUsers: [currentUser.uid, targetId],
+            type,
+            details,
+            status: 'pending',
+            timestamp: serverTimestamp()
+        });
+        showToast("تم إرسال طلبك بنجاح!", "success");
+    }
+    
+    async function loadAndRenderRequests() {
+        if (requestsUnsubscribe) requestsUnsubscribe();
+        
+        const requestsRef = collection(db, "requests");
+        const q = query(requestsRef, 
+            where('involvedUsers', 'array-contains', currentUser.uid)
+        );
+
+        requestsUnsubscribe = onSnapshot(q, (snapshot) => {
+            const allRequests = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            
+            const incoming = allRequests.filter(r => r.toId === currentUser.uid && r.status === 'pending');
+            const outgoing = allRequests.filter(r => r.fromId === currentUser.uid);
+
+            elements.incomingRequests.innerHTML = incoming.length > 0 ? incoming.map(r => `
+                <div class="bg-gray-700 p-3 rounded">
+                    <p>طلب من <b>${r.fromName}</b>: ${r.details.amount} ${r.type === 'resource' ? r.details.type : UNIT_DEFINITIONS[r.details.type]?.name}</p>
+                    <div class="mt-2 space-x-2 space-x-reverse">
+                        <button onclick="window.handleRequest('${r.id}', true)" class="bg-green-600 px-2 py-1 text-xs rounded">قبول</button>
+                        <button onclick="window.handleRequest('${r.id}', false)" class="bg-red-600 px-2 py-1 text-xs rounded">رفض</button>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-gray-500">لا توجد طلبات واردة.</p>';
+
+            elements.outgoingRequests.innerHTML = outgoing.length > 0 ? outgoing.map(r => {
+                const toVillageName = r.toName || 'غير معروف';
+                const statusText = { pending: 'قيد الانتظار', accepted: 'مقبول', declined: 'مرفوض' };
+                return `
+                    <div class="bg-gray-700 p-3 rounded">
+                        <p>طلب إلى <b>${toVillageName}</b>: ${r.details.amount} ${r.type === 'resource' ? r.details.type : UNIT_DEFINITIONS[r.details.type]?.name} - <span class="font-bold">${statusText[r.status] || r.status}</span></p>
+                    </div>`;
+            }).join('') : '<p class="text-gray-500">لم ترسل أي طلبات.</p>';
+        });
+    }
+
+    window.handleRequest = async (reqId, accepted) => {
+        if (!accepted) {
+            await updateDoc(doc(db, "requests", reqId), { status: 'declined' });
+            showToast("تم رفض الطلب.", "info");
+            return;
+        }
+
+        const reqDoc = await getDoc(doc(db, "requests", reqId));
+        if (!reqDoc.exists()) return showToast("لم يعد الطلب موجودًا.", "error");
+        const requestData = reqDoc.data();
+
+        try {
+            await runTransaction(db, async (transaction) => {
+                const senderRef = doc(db, "users", currentUser.uid);
+                const receiverRef = doc(db, "users", requestData.fromId);
+                const senderDoc = await transaction.get(senderRef);
+                const receiverDoc = await transaction.get(receiverRef);
+                
+                if (!senderDoc.exists() || !receiverDoc.exists()) throw "لم يتم العثور على أحد اللاعبين.";
+
+                const { type: reqType, details } = requestData;
+                const { type: detailType, amount: detailAmount } = details;
+                
+                if (reqType === 'resource') {
+                    if ((senderDoc.data().resources[detailType] || 0) < detailAmount) throw "موارد غير كافية!";
+                    const newSenderResources = { ...senderDoc.data().resources };
+                    newSenderResources[detailType] -= detailAmount;
+                    const newReceiverResources = { ...receiverDoc.data().resources };
+                    newReceiverResources[detailType] = (newReceiverResources[detailType] || 0) + detailAmount;
+                    transaction.update(senderRef, { resources: newSenderResources });
+                    transaction.update(receiverRef, { resources: newReceiverResources });
+                } else { // troops
+                    if ((senderDoc.data().army[detailType] || 0) < detailAmount) throw "جنود غير كافيين!";
+                    const newSenderArmy = { ...senderDoc.data().army };
+                    newSenderArmy[detailType] -= detailAmount;
+                    const newReceiverArmy = { ...receiverDoc.data().army };
+                    newReceiverArmy[detailType] = (newReceiverArmy[detailType] || 0) + detailAmount;
+                    transaction.update(senderRef, { army: newSenderArmy });
+                    transaction.update(receiverRef, { army: newReceiverArmy });
+                }
+                transaction.update(doc(db, "requests", reqId), { status: 'accepted' });
+            });
+            showToast("تم قبول الطلب وإرسال الدعم!", "success");
+        } catch (error) {
+            showToast(`فشل: ${error}`, "error");
+            console.error("خطأ في معالجة الطلب:", error);
+        }
+    };
+    
+    function showPrompt({ title, label, onConfirm }) {
+        elements.promptModalTitle.textContent = title;
+        elements.promptModalLabel.textContent = label;
+        elements.promptModalInput.value = "1";
+        promptCallback = onConfirm;
+        elements.promptModal.style.display = 'flex';
+    }
+
+    function showConfirmation({ title, text, onConfirm }) {
+        elements.confirmModalTitle.textContent = title;
+        elements.confirmModalText.textContent = text;
+        confirmCallback = onConfirm;
+        elements.confirmModal.style.display = 'flex';
+    }
+
+    elements.promptModalConfirmBtn.addEventListener('click', () => {
+        if (promptCallback) {
+            promptCallback(elements.promptModalInput.value);
+        }
+        elements.promptModal.style.display = 'none';
+        promptCallback = null;
+    });
+    elements.promptModalCancelBtn.addEventListener('click', () => {
+        elements.promptModal.style.display = 'none';
+        promptCallback = null;
+    });
+
+    elements.confirmModalConfirmBtn.addEventListener('click', () => {
+        if (confirmCallback) {
+            confirmCallback(true);
+        }
+        elements.confirmModal.style.display = 'none';
+        confirmCallback = null;
+    });
+    elements.confirmModalCancelBtn.addEventListener('click', () => {
+         if (confirmCallback) {
+            confirmCallback(false);
+         }
+        elements.confirmModal.style.display = 'none';
+        confirmCallback = null;
+    });
+
+</script>
+</body>
+</html>

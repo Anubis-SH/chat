@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الألعاب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Code Starts Here */
+        body {
+            margin: 0;
+            font-family: 'Cairo', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background-image: linear-gradient(45deg, #16222A 0%, #3A6073 100%);
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00bfff, 0 0 20px #00bfff, 0 0 30px #00bfff;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 40px;
+        }
+
+        .game-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Responsive design for larger screens */
+        @media (min-width: 768px) {
+            .game-nav {
+                flex-direction: row;
+            }
+        }
+
+        .btn {
+            position: relative;
+            padding: 15px 30px;
+            color: #00bfff;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+            overflow: hidden;
+            transition: 0.5s;
+            -webkit-box-reflect: below 1px linear-gradient(transparent, #0005);
+        }
+
+        .btn:hover {
+            background: #00bfff;
+            color: #1a1a2e;
+            box-shadow: 0 0 50px #00bfff;
+            transition-delay: 0.3s;
+        }
+
+        .btn span {
+            position: absolute;
+            display: block;
+        }
+
+        .btn span:nth-child(1) {
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00bfff);
+            animation: animate1 1s linear infinite;
+        }
+
+        @keyframes animate1 {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .btn span:nth-child(2) {
+            top: -100%;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, #00bfff);
+            animation: animate2 1s linear infinite;
+            animation-delay: 0.25s;
+        }
+
+        @keyframes animate2 {
+            0% { top: -100%; }
+            100% { top: 100%; }
+        }
+
+        .btn span:nth-child(3) {
+            bottom: 0;
+            right: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(270deg, transparent, #00bfff);
+            animation: animate3 1s linear infinite;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes animate3 {
+            0% { right: -100%; }
+            100% { right: 100%; }
+        }
+
+        .btn span:nth-child(4) {
+            bottom: -100%;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(360deg, transparent, #00bfff);
+            animation: animate4 1s linear infinite;
+            animation-delay: 0.75s;
+        }
+
+        @keyframes animate4 {
+            0% { bottom: -100%; }
+            100% { bottom: 100%; }
+        }
+        /* CSS Code Ends Here */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>بوابة الألعاب</h1>
+            <p>اختر مغامرتك التالية</p>
+        </header>
+        <nav class="game-nav">
+            <a href="game1.html" class="btn">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                لعبة المتاهة
+            </a>
+            <a href="game2.html" class="btn">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                عروش الصحراء
+            </a>
+            <a href="index.html" class="btn">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                رجوع
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        // JavaScript Code Starts Here
+        console.log("Welcome to the Game Portal!");
+        // يمكنك إضافة كود JavaScript هنا في المستقبل
+        // JavaScript Code Ends Here
+    </script>
+
+</body>
+</html>
