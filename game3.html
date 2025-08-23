@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المدفعجية - قلاع الصحراء</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #231a0d;
+            color: #e8d8c2;
+            overflow: hidden;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .cinzel { font-family: 'Cinzel', serif; }
+        .screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s, transform 0.5s;
+            opacity: 1;
+            transform: scale(1);
+        }
+        .screen.hidden {
+            opacity: 0;
+            transform: scale(1.1);
+            pointer-events: none;
+        }
+        .steampunk-bg {
+            background-image: url('https://i.imgur.com/gKj2WpE.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .steampunk-panel {
+            background-color: rgba(43, 30, 13, 0.85);
+            border: 4px solid #7a5c35;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+        .steampunk-button {
+            background-color: #8c6d46;
+            border: 2px solid #bca280;
+            color: #1a1108;
+            font-weight: bold;
+            text-shadow: none;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .steampunk-button:hover {
+            background-color: #a98965;
+            box-shadow: 0 0 15px #f5deb3aa;
+        }
+        .steampunk-button:active { transform: translateY(2px); }
+        .steampunk-input {
+            background-color: #3d2c12;
+            border: 2px solid #7a5c35;
+            color: #e8d8c2;
+        }
+        .steampunk-input:focus {
+            outline: none;
+            border-color: #f5deb3;
+            box-shadow: 0 0 10px #f5deb388;
+        }
+        .game-hud {
+            text-shadow: 2px 2px 4px #000;
+        }
+        @keyframes gear-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .loader-gear {
+            width: 80px;
+            height: 80px;
+            background-image: url('https://i.imgur.com/PsmgD1L.png');
+            background-size: contain;
+            animation: gear-spin 4s linear infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader-screen" class="screen bg-gray-900 bg-opacity-80 z-50 flex-col">
+        <div class="loader-gear"></div>
+        <p class="cinzel text-2xl text-yellow-200 mt-4">DESERT ARTILLERY</p>
+    </div>
+
+    <div id="login-screen" class="screen steampunk-bg z-40 hidden">
+        <div class="steampunk-panel w-full max-w-md p-8">
+            <h1 class="cinzel text-4xl text-center text-yellow-200 mb-6">المدفعجية</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block mb-2 text-yellow-100">البريد الإلكتروني</label>
+                    <input type="email" id="email" class="steampunk-input w-full p-3 rounded" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block mb-2 text-yellow-100">كلمة المرور</label>
+                    <input type="password" id="password" class="steampunk-input w-full p-3 rounded" required>
+                </div>
+                <button type="submit" class="steampunk-button w-full p-3 rounded text-lg">
+                    دخـــول
+                </button>
+                <p id="login-error" class="text-red-400 text-center mt-4"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="lobby-screen" class="screen steampunk-bg z-30 hidden">
+        <div class="steampunk-panel w-full max-w-4xl p-8 flex flex-col h-3/4">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="cinzel text-4xl text-yellow-200">صالة اللعب</h1>
+                <div class="text-left">
+                    <p id="user-display" class="text-yellow-100"></p>
+                    <button id="logout-button" class="text-red-400 hover:underline">تسجيل الخروج</button>
+                </div>
+            </div>
+            <div class="flex-grow overflow-y-auto border-4 border-[#7a5c35] p-4 rounded bg-[#3d2c12]">
+                <h2 class="cinzel text-2xl text-yellow-300 border-b-2 border-[#7a5c35] pb-2 mb-4">الغرف المتاحة</h2>
+                <div id="rooms-list" class="space-y-3">
+                    </div>
+            </div>
+            <div class="mt-6">
+                <button id="create-room-button" class="steampunk-button w-full p-3 rounded text-lg">
+                    أنشئ غرفة جديدة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen z-20 hidden">
+        <canvas id="game-canvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+        <div class="game-hud absolute bottom-0 left-0 right-0 p-4 bg-black bg-opacity-40 flex justify-between items-center">
+             <div id="players-hud" class="w-1/4"></div>
+
+            <div id="controls-hud" class="w-1/2 flex flex-col items-center gap-2 p-4 steampunk-panel">
+                 <div class="w-full text-center">
+                    <p id="turn-indicator" class="text-xl font-bold text-yellow-300"></p>
+                    <p id="wind-indicator" class="text-lg font-bold text-cyan-300"></p>
+                 </div>
+                 <div class="flex items-center gap-4 w-full">
+                     <span>الزاوية: <span id="angle-value">45</span>°</span>
+                     <input id="angle-slider" type="range" min="0" max="180" value="45" class="w-full">
+                 </div>
+                 <div class="flex items-center gap-4 w-full">
+                     <span>القوة: <span id="power-value">50</span></span>
+                     <input id="power-slider" type="range" min="0" max="100" value="50" class="w-full">
+                 </div>
+                 <div class="flex items-center gap-4 mt-2">
+                    <select id="weapon-select" class="steampunk-input rounded p-2">
+                        <option value="normal">قذيفة عادية</option>
+                        <option value="large">قذيفة كبيرة</option>
+                        <option value="cluster">قذيفة عنقودية</option>
+                    </select>
+                    <button id="fire-button" class="steampunk-button px-10 py-3 rounded-lg text-2xl cinzel">
+                        إطــــلاق
+                    </button>
+                 </div>
+            </div>
+
+            <div class="w-1/4 flex justify-end">
+                <button id="exit-game-button" class="steampunk-button px-4 py-2 rounded">الخروج للوبي</button>
+            </div>
+        </div>
+    </div>
+
+
+<script type="module">
+    // --- إعدادات Firebase ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAeLDfHnZQ2VPzTXRzX4LG2CspnY09Pp6k",
+      authDomain: "chat-11b02.firebaseapp.com",
+      projectId: "chat-11b02",
+      storageBucket: "chat-11b02.appspot.com",
+      messagingSenderId: "837639744108",
+      appId: "1:837639744108:web:99b97ffbf2b891a70c4649"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- عناصر الواجهة ---
+    const screens = {
+        loader: document.getElementById('loader-screen'),
+        login: document.getElementById('login-screen'),
+        lobby: document.getElementById('lobby-screen'),
+        game: document.getElementById('game-screen'),
+    };
+    
+    // --- حالة اللعبة العامة ---
+    let currentUser = null;
+    let currentGameId = null;
+    let gameUnsubscribe = null; // لإلغاء الاستماع للعبة الحالية
+    let roomsUnsubscribe = null; // لإلغاء الاستماع للغرف
+
+    // --- إعدادات اللعبة ---
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    let terrain = [];
+    let gameData = {};
+    const GRAVITY = 0.1;
+
+    // --- دوال التنقل بين الشاشات ---
+    function showScreen(screenName) {
+        Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+        screens[screenName].classList.remove('hidden');
+    }
+
+    // --- منطق المصادقة وتسجيل الدخول/الخروج ---
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorP = document.getElementById('login-error');
+        errorP.textContent = '';
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            errorP.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+        }
+    });
+
+    document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, user => {
+        screens.loader.classList.add('hidden');
+        if (user) {
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                name: user.email.split('@')[0]
+            };
+            document.getElementById('user-display').textContent = `مرحباً، ${currentUser.name}`;
+            showScreen('lobby');
+            listenToRooms();
+        } else {
+            currentUser = null;
+            if (roomsUnsubscribe) roomsUnsubscribe();
+            if (gameUnsubscribe) gameUnsubscribe();
+            showScreen('login');
+        }
+    });
+
+    // --- منطق اللوبي والغرف ---
+    const createRoomButton = document.getElementById('create-room-button');
+    createRoomButton.addEventListener('click', async () => {
+        const gameId = `game_${Date.now()}`;
+        const newGame = {
+            id: gameId,
+            host: currentUser,
+            players: [{...currentUser, hp: 100, color: '#FF5733'}],
+            status: 'waiting', // waiting, active, finished
+            createdAt: new Date(),
+            currentTurn: 0,
+            wind: (Math.random() * 2 - 1) * 2, // رياح عشوائية بين -2 و 2
+        };
+        await setDoc(doc(db, "games", gameId), newGame);
+        joinGame(gameId);
+    });
+
+    function listenToRooms() {
+        if (roomsUnsubscribe) roomsUnsubscribe();
+        const q = query(collection(db, "games"), where("status", "==", "waiting"));
+        roomsUnsubscribe = onSnapshot(q, (snapshot) => {
+            const roomsList = document.getElementById('rooms-list');
+            if (snapshot.empty) {
+                roomsList.innerHTML = '<p class="text-gray-400 text-center">لا توجد غرف متاحة حالياً. قم بإنشاء واحدة!</p>';
+                return;
+            }
+            roomsList.innerHTML = snapshot.docs.map(doc => {
+                const room = doc.data();
+                return `
+                    <div class="steampunk-panel p-4 flex justify-between items-center bg-opacity-40">
+                        <div>
+                            <h3 class="text-xl text-yellow-200">غرفة ${room.host.name}</h3>
+                            <p class="text-sm text-yellow-100">${room.players.length} / 4 لاعبين</p>
+                        </div>
+                        <button class="join-room-button steampunk-button px-4 py-2 rounded" data-id="${room.id}" ${room.players.length >= 4 ? 'disabled' : ''}>
+                            ${room.players.length >= 4 ? 'ممتلئة' : 'انضم'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.join-room-button').forEach(button => {
+                button.onclick = () => joinGame(button.dataset.id);
+            });
+        });
+    }
+
+    async function joinGame(gameId) {
+        if (!currentUser) return;
+        const gameRef = doc(db, "games", gameId);
+        const gameSnap = await getDoc(gameRef);
+
+        if (gameSnap.exists()) {
+            const game = gameSnap.data();
+            const playerExists = game.players.some(p => p.uid === currentUser.uid);
+            
+            if (!playerExists && game.players.length < 4) {
+                const playerColors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1'];
+                const newPlayer = {
+                    ...currentUser,
+                    hp: 100,
+                    color: playerColors[game.players.length]
+                };
+                await updateDoc(gameRef, {
+                    players: [...game.players, newPlayer]
+                });
+            }
+            
+            currentGameId = gameId;
+            if (roomsUnsubscribe) roomsUnsubscribe(); // نوقف الاستماع للغرف لأننا دخلنا لعبة
+            listenToGame(gameId);
+        }
+    }
+
+    // --- منطق اللعبة الرئيسي ---
+    function listenToGame(gameId) {
+        showScreen('game');
+        if (gameUnsubscribe) gameUnsubscribe();
+        
+        gameUnsubscribe = onSnapshot(doc(db, "games", gameId), (doc) => {
+            if (!doc.exists()) {
+                exitGame(); // الخروج إذا تم حذف اللعبة
+                return;
+            }
+            gameData = doc.data();
+            
+            // إذا بدأت اللعبة ولم يتم إنشاء التضاريس بعد
+            if (gameData.status === 'active' && !gameData.terrain) {
+                if(gameData.host.uid === currentUser.uid) { // فقط المضيف ينشئ التضاريس
+                    generateTerrain();
+                    placePlayers();
+                    updateDoc(doc.ref, { terrain: terrain, players: gameData.players });
+                }
+                return; // ننتظر التحديث القادم الذي سيحتوي على التضاريس
+            }
+
+            terrain = gameData.terrain;
+            updatePlayersHUD();
+            updateControlsHUD();
+            
+            // التحقق من وجود قذيفة لإطلاقها
+            if(gameData.lastShot) {
+                animateProjectile(gameData.lastShot);
+                // المضيف هو المسؤول عن تنظيف بيانات الطلقة بعد إطلاقها لتجنب إعادتها
+                if (currentUser.uid === gameData.host.uid) {
+                    // نستخدم setTimeout لنتأكد أن كل اللاعبين استلموا الطلقة قبل حذفها
+                    setTimeout(() => {
+                        updateDoc(doc.ref, { lastShot: null });
+                    }, 500);
+                }
+            }
+
+            draw();
+        });
+    }
+
+    function generateTerrain() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        terrain = [];
+        let y = canvas.height * (Math.random() * 0.3 + 0.6); // تبدأ بين 60% و 90% من الأسفل
+        for (let i = 0; i < canvas.width; i++) {
+            terrain.push(y);
+            y += (Math.random() * 2 - 1) * 1.5; // تغيير طفيف في الارتفاع
+            if (y > canvas.height * 0.9) y = canvas.height * 0.9;
+            if (y < canvas.height * 0.4) y = canvas.height * 0.4;
+        }
+    }
+
+    function placePlayers() {
+        const segment = canvas.width / (gameData.players.length + 1);
+        gameData.players.forEach((player, i) => {
+            player.x = segment * (i + 1);
+            player.y = terrain[Math.floor(player.x)] - 20; // -20 ليكون فوق الأرض
+        });
+    }
+
+    document.getElementById('exit-game-button').addEventListener('click', exitGame);
+    async function exitGame() {
+        if (gameUnsubscribe) gameUnsubscribe();
+        gameUnsubscribe = null;
+        currentGameId = null;
+
+        // منطق إضافي: إذا كان المضيف هو من خرج، يمكن حذف اللعبة
+        // أو تعيين مضيف جديد. للتبسيط، سنعود للوبي فقط.
+
+        showScreen('lobby');
+        listenToRooms();
+    }
+    
+    // --- منطق الرسم على الكانفاس ---
+    function draw() {
+        if (!terrain || terrain.length === 0) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // رسم الخلفية المتدرجة
+        const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        sky.addColorStop(0, '#3a2a1a');
+        sky.addColorStop(0.6, '#8b5a33');
+        sky.addColorStop(1, '#4a331c');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // رسم التضاريس
+        ctx.fillStyle = '#b08a5d'; // لون الرمال
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        for(let i=0; i < terrain.length; i++) {
+            ctx.lineTo(i, terrain[i]);
+        }
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // رسم اللاعبين
+        gameData.players.forEach(player => {
+            if (player.hp > 0) {
+                 // رسم جسم الدبابة البخارية
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.rect(player.x - 20, player.y - 10, 40, 10);
+                ctx.arc(player.x, player.y - 15, 10, Math.PI, 2*Math.PI);
+                ctx.fill();
+                
+                // رسم المدفع
+                ctx.save();
+                ctx.translate(player.x, player.y - 15);
+                const angle = (180 - (gameData.currentTurn === gameData.players.findIndex(p=>p.uid===player.uid) ? document.getElementById('angle-slider').value : 45)) * Math.PI / 180;
+                ctx.rotate(angle);
+                ctx.fillStyle = '#555';
+                ctx.fillRect(0, -2.5, 25, 5);
+                ctx.restore();
+
+                // رسم شريط الصحة
+                ctx.fillStyle = '#333';
+                ctx.fillRect(player.x - 20, player.y - 35, 40, 5);
+                ctx.fillStyle = 'green';
+                ctx.fillRect(player.x - 20, player.y - 35, 40 * (player.hp / 100), 5);
+            }
+        });
+    }
+
+    // --- منطق واجهة التحكم ---
+    function updatePlayersHUD() {
+        const hud = document.getElementById('players-hud');
+        hud.innerHTML = gameData.players.map(p => `
+            <div class="p-2 rounded mb-2" style="background-color: ${p.color}55; border-right: 4px solid ${p.color}">
+                <p class="font-bold">${p.name} ${p.hp <= 0 ? '(دُمر)' : ''}</p>
+                <div class="w-full bg-gray-700 rounded h-2.5">
+                    <div class="bg-green-500 h-2.5 rounded" style="width: ${p.hp}%"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateControlsHUD() {
+        const controls = document.getElementById('controls-hud');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const windIndicator = document.getElementById('wind-indicator');
+
+        if (gameData.status === 'waiting') {
+            turnIndicator.textContent = "في انتظار اللاعبين...";
+            controls.style.display = 'none';
+            // إظهار زر بدء اللعبة للمضيف فقط
+            if (gameData.host.uid === currentUser.uid && !document.getElementById('start-game-btn')) {
+                const startBtn = document.createElement('button');
+                startBtn.id = 'start-game-btn';
+                startBtn.textContent = 'ابدأ اللعبة';
+                startBtn.className = 'steampunk-button px-10 py-3 rounded-lg text-2xl cinzel mt-4';
+                startBtn.onclick = () => updateDoc(doc(db, "games", currentGameId), { status: 'active' });
+                document.getElementById('players-hud').appendChild(startBtn);
+            }
+            return;
+        }
+
+        const currentPlayer = gameData.players[gameData.currentTurn];
+        const isMyTurn = currentPlayer.uid === currentUser.uid;
+
+        controls.style.display = 'flex';
+        turnIndicator.textContent = isMyTurn ? "انه دورك!" : `دور اللاعب: ${currentPlayer.name}`;
+        
+        let windText = `الرياح: ${Math.abs(gameData.wind).toFixed(1)}`;
+        if (gameData.wind > 0.1) windText += ' (-> يمين)';
+        else if (gameData.wind < -0.1) windText += ' (<- يسار)';
+        else windText += ' (هادئة)';
+        windIndicator.textContent = windText;
+        
+        // تفعيل/تعطيل التحكم
+        document.getElementById('angle-slider').disabled = !isMyTurn;
+        document.getElementById('power-slider').disabled = !isMyTurn;
+        document.getElementById('weapon-select').disabled = !isMyTurn;
+        document.getElementById('fire-button').disabled = !isMyTurn;
+    }
+    
+    document.getElementById('angle-slider').addEventListener('input', (e) => {
+        document.getElementById('angle-value').textContent = e.target.value;
+        draw(); // إعادة الرسم لتحديث زاوية المدفع
+    });
+    document.getElementById('power-slider').addEventListener('input', (e) => {
+        document.getElementById('power-value').textContent = e.target.value;
+    });
+
+    // --- منطق إطلاق النار والفيزياء ---
+    document.getElementById('fire-button').addEventListener('click', async () => {
+        const angle = document.getElementById('angle-slider').value;
+        const power = document.getElementById('power-slider').value;
+        const weapon = document.getElementById('weapon-select').value;
+        
+        const shotData = { angle, power, weapon, playerId: currentUser.uid };
+
+        await updateDoc(doc(db, "games", currentGameId), { lastShot: shotData });
+    });
+
+    function animateProjectile(shot) {
+        const shooter = gameData.players.find(p => p.uid === shot.playerId);
+        if (!shooter) return;
+
+        let angleRad = (180 - shot.angle) * Math.PI / 180;
+        let power = shot.power / 5;
+
+        let proj = {
+            x: shooter.x + Math.cos(angleRad) * 25,
+            y: shooter.y - 15 + Math.sin(angleRad) * 25,
+            vx: Math.cos(angleRad) * power + (gameData.wind || 0), // تأثير الرياح
+            vy: Math.sin(angleRad) * power
+        };
+
+        const animationInterval = setInterval(() => {
+            proj.x += proj.vx;
+            proj.y += proj.vy;
+            proj.vy += GRAVITY;
+
+            // ارسم كل شيء مجدداً ثم ارسم القذيفة
+            draw();
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // التحقق من الاصطدام
+            if (proj.x < 0 || proj.x > canvas.width || proj.y > terrain[Math.floor(proj.x)]) {
+                clearInterval(animationInterval);
+                handleExplosion(proj.x, proj.y, shot.weapon);
+            }
+        }, 16); // تقريباً 60 إطار في الثانية
+    }
+
+    async function handleExplosion(x, y, weapon) {
+        // فقط المضيف هو من يحسب الضرر والتدمير لضمان نتيجة واحدة للجميع
+        if (currentUser.uid !== gameData.host.uid) return;
+
+        const weaponStats = {
+            normal: { radius: 30, damage: 30 },
+            large: { radius: 60, damage: 50 },
+            cluster: { radius: 20, damage: 15, count: 5 }
+        };
+
+        const stats = weaponStats[weapon];
+        
+        // تنفيذ انفجار القذيفة العنقودية
+        if(weapon === 'cluster') {
+            for(let i=0; i<stats.count; i++) {
+                // نؤخر انفجار الشظايا قليلاً
+                setTimeout(() => {
+                    const clusterX = x + (Math.random() * 100 - 50);
+                    const clusterY = y - (Math.random() * 50);
+                    applyDamageAndDeform(clusterX, clusterY, stats.radius, stats.damage);
+                }, i * 100);
+            }
+        } else {
+             applyDamageAndDeform(x, y, stats.radius, stats.damage);
+        }
+
+        // بعد فترة قصيرة لتكتمل الانفجارات، نقوم بتحديث قاعدة البيانات
+        setTimeout(async () => {
+            // التحقق من الفائز
+            const alivePlayers = gameData.players.filter(p => p.hp > 0);
+            let newStatus = gameData.status;
+            if (alivePlayers.length <= 1) {
+                newStatus = 'finished';
+                 setTimeout(() => { // إعطاء فرصة لرؤية آخر انفجار
+                    alert(`انتهت اللعبة! الفائز هو: ${alivePlayers[0]?.name || 'لا أحد'}`);
+                 }, 2000);
+            }
+
+            // نمرر الدور للاعب التالي
+            let nextTurn = (gameData.currentTurn + 1) % gameData.players.length;
+            // نتخطى اللاعبين الذين خسروا
+            while(gameData.players[nextTurn].hp <= 0) {
+                nextTurn = (nextTurn + 1) % gameData.players.length;
+            }
+            
+            await updateDoc(doc(db, "games", currentGameId), {
+                terrain: terrain,
+                players: gameData.players,
+                currentTurn: nextTurn,
+                status: newStatus,
+                wind: (Math.random() * 2 - 1) * 2 // تغيير الرياح مع كل دور
+            });
+
+        }, weapon === 'cluster' ? 1000 : 500);
+    }
+    
+    function applyDamageAndDeform(x, y, radius, damage) {
+        // تدمير التضاريس
+        const startX = Math.max(0, Math.floor(x - radius));
+        const endX = Math.min(canvas.width, Math.floor(x + radius));
+
+        for (let i = startX; i < endX; i++) {
+            const dist = Math.sqrt(Math.pow(i - x, 2));
+            const deform = Math.sqrt(Math.pow(radius, 2) - Math.pow(dist, 2));
+            terrain[i] = Math.min(canvas.height, terrain[i] + deform);
+        }
+
+        // إلحاق الضرر باللاعبين
+        gameData.players.forEach(player => {
+            if (player.hp > 0) {
+                const dist = Math.sqrt(Math.pow(player.x - x, 2) + Math.pow(player.y - y, 2));
+                if (dist < radius) {
+                    const damageDealt = Math.floor(damage * (1 - dist / radius));
+                    player.hp = Math.max(0, player.hp - damageDealt);
+                }
+                // تحديث موقع اللاعب إذا انهارت الأرض تحته
+                player.y = terrain[Math.floor(player.x)] - 20;
+            }
+        });
+    }
+
+</script>
+</body>
+</html>
